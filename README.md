@@ -1,1 +1,1 @@
-# Template for a Webpack + TypeScript setup
+# Arena game
