@@ -1,0 +1,1 @@
+export const PLATFORM_ROOF_LABEL = "platform-roof"
