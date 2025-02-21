@@ -14,8 +14,8 @@ const config = {
     arcade: {
       gravity: { y: 0, x: 0 },
     },
-    fps: { target: 60, forceSetTimeOut: false },
-    physics: { arcade: { fixedStep: true, fps: 60 } },
+    fps: { target: 144, forceSetTimeOut: false },
+    physics: { arcade: { fixedStep: true, fps: 144 } },
   },
   scale: {
     mode: Phaser.Scale.RESIZE, // Automatically resize to fit the screen
