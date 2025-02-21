@@ -1,119 +1,185 @@
 import Phaser from "phaser";
-import playerTexture from "../../assets/player.png"; // Import texture
-import { COLLISION_CATEGORY } from "../../constants";
-import { PLAYER_MOVEMENT } from "./Player.constants";
-import { PLATFORM_ROOF_LABEL } from "../Platform/Platform.constants";
+import { PLAYER_CONFIG } from "./Player.constants";
 
-export default class Player extends Phaser.Physics.Matter.Sprite {
-  private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
-  private isJumping: boolean = false;
+interface Cursors {
+  W: Phaser.Input.Keyboard.Key;
+  A: Phaser.Input.Keyboard.Key;
+  S: Phaser.Input.Keyboard.Key;
+  D: Phaser.Input.Keyboard.Key;
+  SPACE: Phaser.Input.Keyboard.Key;
+  SHIFT: Phaser.Input.Keyboard.Key;
+}
+
+export default class Player extends Phaser.Physics.Arcade.Sprite {
   private multiJumpCounter: number = 0;
   private jumpHoldTimeMs: number = 0;
+  private isDroppingThrough: boolean = false;
+  private cursors?: Cursors;
+  private airDashCount: number = 0;
+  private lastDirection: "left" | "right" = "right";
+  /**
+   * Whenever this is set to a greater value than provided in the config
+   * the max movement speed will decay from the value back to base value
+   * over a configurable rate.
+   */
+  private decayingMaxVelocity: number = PLAYER_CONFIG.maxVelocity;
+  /**
+   * Set from the scene when standing on drop-through platform
+   */
+  public standingOnPassThroughPlatform: boolean = false;
 
-  constructor(scene: Phaser.Scene, x: number, y: number) {
-    super(scene.matter.world, x, y, "player");
+  constructor(scene: Phaser.Scene, x: number, y: number, texture: string) {
+    super(scene, x, y, texture);
     scene.add.existing(this);
-    this.setDepth(10);
+    scene.physics.add.existing(this);
+    this.setCollideWorldBounds(true);
+    this.setGravity(0, PLAYER_CONFIG.gravity);
+    this.depth = PLAYER_CONFIG.depth;
+    this.setDrag(PLAYER_CONFIG.drag, 0);
+    this.setMaxVelocity(PLAYER_CONFIG.maxVelocity);
 
-    // Configure physics properties
-    this.setFixedRotation();
-    this.setFriction(0.02);
-    this.setBounce(0);
+    if (scene.input.keyboard) {
+      this.cursors = {
+        W: scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W),
+        A: scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.A),
+        S: scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.S),
+        D: scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.D),
+        SPACE: scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE),
+        SHIFT: scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT),
+      };
+    }
+  }
 
-
-
-
-
-    // Set collision categories
-    this.setCollisionCategory(COLLISION_CATEGORY.player);
-    this.setCollidesWith([COLLISION_CATEGORY.platform]);
-
-    // Store input keys
-    this.cursors = scene.input.keyboard!.createCursorKeys();
-
-    // Detect ground collision
-    
-    this.setOnCollide((d: any) => {
-      console.log("==>",d.bodyA.bounds.max.y)
-    
-      // Typeguard
-      if (!d?.bodyA || !d?.bodyB) return; 
-      
-      // Find objects
-      const playerBody = d.bodyA === this.body ? d.bodyA : d.bodyB;
-      const otherBody = playerBody === d.bodyA ? d.bodyB : d.bodyA;
-      if (otherBody.label === PLATFORM_ROOF_LABEL) {
-        if (this.body && this.body.velocity.y < 0) {
-          console.log("Ignoring topSensor collision while moving up", this.body.velocity.y);
-          
-          // ✅ Disable collision with the topSensor
-          this.setCollidesWith([]);
-          
-          return; // Ignore the collision
-        } else {
-          
-          this.isJumping = false;
-          this.jumpHoldTimeMs = 0;
-          this.multiJumpCounter = 0;
-        }
-      }
-
-      console.log(d)
-      
-      /**
-      // Check if the player’s bottom is colliding with the top of another object
-      const isBottomTouching = Math.floor(Math.abs(playerBody.bounds.max.y - otherBody.bounds.min.y - 1)) === 0;
-      
-      if (isBottomTouching) {
-        console.log("Player is standing on an object");
-        this.isJumping = false;
-        this.jumpHoldTimeMs = 0;
-        this.multiJumpCounter = 0;
-      }
-        **/
-    });
+  getBody() {
+    return this.body as Phaser.Physics.Arcade.Body;
   }
 
   update() {
-    this.handleMovement();
-    if (this.body && this.body.velocity.y > 0) {
-      this.setCollidesWith([COLLISION_CATEGORY.platform])
-    } else {
-      this.setCollidesWith([]);
-    }
-    console.log(this)
+    const body = this.getBody();
 
-  }
-
-  private handleMovement() {
-    // Move left & right
-    if (this.cursors.left.isDown) {
-      this.setVelocityX(-PLAYER_MOVEMENT.runSpeed);
-    } else if (this.cursors.right.isDown) {
-      this.setVelocityX(PLAYER_MOVEMENT.runSpeed);
-    } else {
-      this.setVelocityX(0);
+    // Snap X position when very close to 0 to avoid floting-point drift
+    if (Math.abs(body.velocity.x) < 1 && Math.abs(this.x % 1) > 0.01) {
+      this.x = Math.round(this.x);
     }
 
-    // Jump logic
-    if ((!this.isJumping || this.jumpHoldTimeMs < PLAYER_MOVEMENT.maxJumpLingeringMs) && this.cursors.up.isDown) {
-      this.isJumping = true;
-      this.setVelocityY(-PLAYER_MOVEMENT.jumpSpeed);
-    }
-    // Multi-jump (Double jump, etc.)
-    else if (
-      Phaser.Input.Keyboard.JustDown(this.cursors.up) &&
-      this.isJumping &&
-      this.multiJumpCounter <= PLAYER_MOVEMENT.maxMultiJumpCount
-    ) {
-      this.jumpHoldTimeMs = 0;
-      this.setVelocityY(-PLAYER_MOVEMENT.jumpSpeed);
-      this.multiJumpCounter++;
-    }
+    if (this.cursors) {
+      // ################################################################
+      // Reset
+      // ################################################################
+      if (body.touching.down) {
+        this.jumpHoldTimeMs = 0;
+        this.multiJumpCounter = 0;
+        this.airDashCount = 0;
+      } else {
+        this.standingOnPassThroughPlatform = false;
+      }
 
-    // Track jump hold time
-    if (this.isJumping) {
-      this.jumpHoldTimeMs += this.scene.game.loop.delta;
+      // ################################################################
+      // Strafe cancel, strafe snapping
+      // !! Needs to be run before setting current call's "lastDirection"
+      // ################################################################
+      if (
+        this.lastDirection === "right" &&
+        Phaser.Input.Keyboard.JustDown(this.cursors.A) &&
+        body.velocity.x > PLAYER_CONFIG.strafeCancelSnapVelocity
+      ) {
+        this.setVelocityX(PLAYER_CONFIG.strafeCancelSnapVelocity);
+      } else if (
+        this.lastDirection === "left" &&
+        Phaser.Input.Keyboard.JustDown(this.cursors.D) &&
+        body.velocity.x < (-PLAYER_CONFIG.strafeCancelSnapVelocity)
+      ) {
+        this.setVelocityX(-PLAYER_CONFIG.strafeCancelSnapVelocity);
+      }
+
+      // ################################################################
+      // Move horizontally
+      // ################################################################
+      if (this.cursors.A.isDown) {
+        this.setAccelerationX(-PLAYER_CONFIG.acceleration);
+        this.lastDirection = "left";
+      } else if (this.cursors.D.isDown) {
+        this.setAccelerationX(PLAYER_CONFIG.acceleration);
+        this.lastDirection = "right";
+      } else {
+        // Stop applying force, let drag slow it down
+        this.setAccelerationX(0); 
+      }
+
+      // ################################################################
+      // Drop through platform
+      // ################################################################
+      if (this.cursors.S.isDown && this.standingOnPassThroughPlatform) {
+        this.isDroppingThrough = true;
+        body.checkCollision.down = false;
+        this.setVelocityY(200);
+      } else {
+        if (this.isDroppingThrough) {
+          this.isDroppingThrough = false;
+          setTimeout(() => {
+            body.checkCollision.down = true;
+          }, 100)
+        }
+      }
+
+      // ################################################################
+      // Air dash
+      // ################################################################
+      if (
+        //!body.blocked.down && 
+        Phaser.Input.Keyboard.JustDown(this.cursors.SHIFT) &&
+        PLAYER_CONFIG.maxAirDashCount > this.airDashCount
+      ) {
+        this.airDashCount++;
+        const velocityX = this.lastDirection === "right" 
+          ? PLAYER_CONFIG.airDashVelocity 
+          : -PLAYER_CONFIG.airDashVelocity;
+
+        // Uncap velocity decaying
+        this.decayingMaxVelocity = velocityX;
+        this.setVelocityX(velocityX);
+      }
+      
+      // ################################################################
+      // Jump
+      // ################################################################
+      if (
+        this.cursors.SPACE.isDown 
+        && (body.blocked.down || this.jumpHoldTimeMs <= PLAYER_CONFIG.maxJumpLingeringMs)
+      ) {
+        // Lingering jump boost tracker
+        this.jumpHoldTimeMs = this.jumpHoldTimeMs + this.scene.game.loop.delta;
+        this.setVelocityY(-PLAYER_CONFIG.jumpVelocity);
+      }
+      // Multi jump
+      else if (
+        Phaser.Input.Keyboard.JustDown(this.cursors.SPACE) &&
+        this.multiJumpCounter <= PLAYER_CONFIG.maxMultiJumpCount
+      ) {
+        this.jumpHoldTimeMs = 0;
+        this.setVelocityY(-PLAYER_CONFIG.jumpVelocity);
+        this.multiJumpCounter++
+      }
+      
+      // ################################################################
+      // Decaying max velocity - gradually decresing decayingMaxVelocity back to the base max velocity
+      // ################################################################
+      if (this.decayingMaxVelocity !== PLAYER_CONFIG.maxVelocity) {
+        const decayAmount = PLAYER_CONFIG.uncappedVelocityDecayRate;
+    
+        if (this.decayingMaxVelocity > PLAYER_CONFIG.maxVelocity) {
+            // Decay towards normal max velocity when above it
+            this.decayingMaxVelocity = Math.max(this.decayingMaxVelocity - decayAmount, PLAYER_CONFIG.maxVelocity);
+        } else if (this.decayingMaxVelocity < -PLAYER_CONFIG.maxVelocity) {
+            // Decay towards negative max velocity when below it (for moving left)
+            this.decayingMaxVelocity = Math.min(this.decayingMaxVelocity + decayAmount, -PLAYER_CONFIG.maxVelocity);
+        } else {
+            // Ensure it locks at the correct speed when within range
+            this.decayingMaxVelocity = PLAYER_CONFIG.maxVelocity;
+        }
+    
+        this.setMaxVelocity(Math.abs(this.decayingMaxVelocity));
+      }
     }
   }
 }

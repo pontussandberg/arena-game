@@ -1,0 +1,1 @@
+export { default as Passive } from "./Passive";
