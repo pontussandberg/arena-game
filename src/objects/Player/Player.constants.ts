@@ -7,7 +7,7 @@ export const PLAYER_CONFIG = {
   /**
    * Will break velocity cap if its a greater value
    */
-  airDashVelocity: 2000,
+  airDashVelocity: 1600,
   /**
    * Rendered z-index
    */
