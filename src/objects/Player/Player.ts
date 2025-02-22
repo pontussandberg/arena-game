@@ -1,5 +1,7 @@
 import Phaser from "phaser";
-import { PLAYER_CONFIG } from "./Player.constants";
+import { PLAYER_CONFIG  } from "./Player.constants";
+import { MouseFollower } from "../MouseFollower";
+import { PlayerConfig } from "./Player.types";
 
 interface Cursors {
   W: Phaser.Input.Keyboard.Key;
@@ -11,6 +13,8 @@ interface Cursors {
 }
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
+  private config: PlayerConfig;
+  private mouseFollower!: MouseFollower;
   private multiJumpCounter: number = 0;
   private jumpHoldTimeMs: number = 0;
   private isJumpHolding: boolean = false;
@@ -23,23 +27,37 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
    * the max movement velocity will decay from the value back to base value
    * over a configurable rate.
    */
-  private overcappedMaxVelocity: number = PLAYER_CONFIG.maxVelocity;
+  private overcappedMaxVelocity!: number;
   /**
    * Must be set to true from the scene it's rendered from in order for the
    * drop-through mechanic to work.
    */
   public standingOnPassThroughPlatform: boolean = false;
 
-  constructor(scene: Phaser.Scene, x: number, y: number, texture: string) {
+  constructor(
+    scene: Phaser.Scene, 
+    x: number, 
+    y: number, 
+    texture: string, 
+    config: PlayerConfig = PLAYER_CONFIG,
+  ) {
     super(scene, x, y, texture);
     scene.add.existing(this);
     scene.physics.add.existing(this);
-    this.setCollideWorldBounds(true);
-    this.setGravity(0, PLAYER_CONFIG.gravity);
-    this.depth = PLAYER_CONFIG.depth;
-    this.setDrag(PLAYER_CONFIG.drag.x, PLAYER_CONFIG.drag.y);
-    this.setMaxVelocity(PLAYER_CONFIG.maxVelocity);
+    this.config = config;
+    this.depth = config.depth;
+    this.overcappedMaxVelocity = config.overcappedVelocityDecayRate;
 
+    // Init mouse follower
+    this.mouseFollower = new MouseFollower(scene, this, "mouseFollower");
+
+    // Physics
+    this.setCollideWorldBounds(true);
+    this.setGravity(0, this.config.gravity);
+    this.setDrag(this.config.drag.x, this.config.drag.y);
+    this.setMaxVelocity(this.config.maxVelocity);
+
+    // Input
     if (scene.input.keyboard) {
       this.cursors = {
         W: scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.W),
@@ -52,12 +70,29 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
+  private applyVelocityTowardsArrow(velocity: number) {
+    // Get direction vector from player to MouseFollower
+    const dx = this.mouseFollower.x - this.x;
+    const dy = this.mouseFollower.y - this.y;
+  
+    // Normalize the direction vector (to ensure consistent movement speed)
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    if (distance === 0) return; // Prevent division by zero
+  
+    const normalizedDx = dx / distance;
+    const normalizedDy = dy / distance;
+  
+    // Apply velocity in that direction
+    this.setVelocity(normalizedDx * velocity, normalizedDy * velocity);
+  }
+  
+
   public getBody() {
     return this.body as Phaser.Physics.Arcade.Body;
   }
 
   private isMaxVelocityDecaying(): boolean {
-    return this.overcappedMaxVelocity !== PLAYER_CONFIG.maxVelocity
+    return this.overcappedMaxVelocity !== this.config.maxVelocity
   }
 
   // ################################################################
@@ -65,44 +100,43 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   // - Gradually decresing overcappedMaxVelocity back to the base max velocity
   // ################################################################
   private decayOvercappedVelocity(): void {
-    if (this.overcappedMaxVelocity > PLAYER_CONFIG.maxVelocity) {
-      if (this.overcappedMaxVelocity > PLAYER_CONFIG.maxVelocity) {
+    if (this.overcappedMaxVelocity > this.config.maxVelocity) {
+      if (this.overcappedMaxVelocity > this.config.maxVelocity) {
         // Decay towards normal max velocity when above it
         this.overcappedMaxVelocity = Math.max(
-          this.overcappedMaxVelocity - PLAYER_CONFIG.overcappedVelocityDecayRate, 
-          PLAYER_CONFIG.maxVelocity
+          this.overcappedMaxVelocity - this.config.overcappedVelocityDecayRate, 
+          this.config.maxVelocity
         );
       } else {
         // Ensure it locks at the correct speed when within range
-        this.overcappedMaxVelocity = PLAYER_CONFIG.maxVelocity;
+        this.overcappedMaxVelocity = this.config.maxVelocity;
       }
   
       // Update player velocity
       this.setMaxVelocity(Math.abs(this.overcappedMaxVelocity));
     } else {
-      this.setMaxVelocity(PLAYER_CONFIG.maxVelocity);
+      this.setMaxVelocity(this.config.maxVelocity);
+      this.overcappedMaxVelocity = this.config.maxVelocity;
     }
   }
 
   private performJump() {
-    this.setVelocityY(-PLAYER_CONFIG.jumpVelocity);
+    this.setVelocityY(-this.config.jumpVelocity);
   }
 
-  private performDash(dir: "left" | "right") {
+  private performDash() {
     this.airDashCount++;
-    this.overcappedMaxVelocity = PLAYER_CONFIG.dashVelocity;
-    this.setVelocityX(
-      dir === "right" 
-        ? PLAYER_CONFIG.dashVelocity
-        : -PLAYER_CONFIG.dashVelocity
-    );
+    this.overcappedMaxVelocity = this.config.dashVelocity;
+    this.applyVelocityTowardsArrow(this.config.dashVelocity);
   }
 
   private canJumpBoost(): boolean {
-    return this.jumpHoldTimeMs < PLAYER_CONFIG.jumpBoostDurationMs
+    return this.jumpHoldTimeMs < this.config.jumpBoostDurationMs
   }
 
   public update() {
+    this.mouseFollower.update();
+     
     if (!this.cursors) {
       return;
     }
@@ -132,25 +166,25 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (
       this.lastDirection === "right" &&
       Phaser.Input.Keyboard.JustDown(this.cursors.A) &&
-      body.velocity.x > PLAYER_CONFIG.strafeCancelSnapVelocity
+      body.velocity.x > this.config.strafeCancelSnapVelocity
     ) {
-      this.setVelocityX(PLAYER_CONFIG.strafeCancelSnapVelocity);
+      this.setVelocityX(this.config.strafeCancelSnapVelocity);
     } else if (
       this.lastDirection === "left" &&
       Phaser.Input.Keyboard.JustDown(this.cursors.D) &&
-      body.velocity.x < (-PLAYER_CONFIG.strafeCancelSnapVelocity)
+      body.velocity.x < (-this.config.strafeCancelSnapVelocity)
     ) {
-      this.setVelocityX(-PLAYER_CONFIG.strafeCancelSnapVelocity);
+      this.setVelocityX(-this.config.strafeCancelSnapVelocity);
     }
 
     // ################################################################
     // Move horizontally
     // ################################################################
     if (this.cursors.A.isDown) {
-      this.setAccelerationX(-PLAYER_CONFIG.acceleration);
+      this.setAccelerationX(-this.config.acceleration);
       this.lastDirection = "left";
     } else if (this.cursors.D.isDown) {
-      this.setAccelerationX(PLAYER_CONFIG.acceleration);
+      this.setAccelerationX(this.config.acceleration);
       this.lastDirection = "right";
     } else {
       // Stop applying force, let drag slow it down
@@ -174,19 +208,16 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // ################################################################
     // Dash
     // ################################################################
+    console.log(this.overcappedMaxVelocity)
     if (
       this.cursors.SHIFT.isDown 
       && !this.isMaxVelocityDecaying() 
       && (
-        PLAYER_CONFIG.dashCharges === undefined 
-        || PLAYER_CONFIG.dashCharges > this.airDashCount
+        this.config.dashCharges === undefined 
+        || this.config.dashCharges > this.airDashCount
       ) 
     ) {
-      if (this.cursors.A.isDown) {
-        this.performDash("left");
-      } else if (this.cursors.D.isDown) {
-        this.performDash("right");
-      }
+      this.performDash();
     }
     
     // ################################################################
@@ -219,8 +250,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       else if (
         Phaser.Input.Keyboard.JustDown(this.cursors.SPACE)
         && (
-          PLAYER_CONFIG.multiJumpCharges === undefined 
-          || PLAYER_CONFIG.multiJumpCharges > this.multiJumpCounter
+          this.config.multiJumpCharges === undefined 
+          || this.config.multiJumpCharges > this.multiJumpCounter
         )
       ) {
         this.multiJumpCounter++ 
