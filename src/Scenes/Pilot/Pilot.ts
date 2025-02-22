@@ -15,9 +15,6 @@ export default class Pilot extends Phaser.Scene {
   private groundTiles!: Phaser.Physics.Arcade.StaticGroup;
   private clouds!: Phaser.Physics.Arcade.StaticGroup;
 
-  private mapWidth = 10000;
-  private mapHeight = 1050;
-
   preload() {
     this.load.image('boxSmall', boxSmall);
     this.load.image('boxLarge', boxLarge);

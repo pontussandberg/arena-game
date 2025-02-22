@@ -1,62 +1,65 @@
 export const PLAYER_CONFIG: {
-  maxVelocity: number;
-  jumpVelocity: number;
-  airDashVelocity: number;
-  depth: number;
-  acceleration: number;
-  strafeCancelSnapVelocity: number;
-  gravity: number;
-  drag: number;
-  maxJumpLingeringMs: number;
-  maxMultiJumpCount?: number;
-  maxAirDashCount?: number;
-  uncappedVelocityDecayRate: number;
-} = {
-  /**
-   * Velocity
-   */
-  maxVelocity: 700,
-  jumpVelocity: 350,
-  /**
-   * Will break velocity cap if its a greater value
-   */
-  airDashVelocity: 1300,
   /**
    * Rendered z-index
    */
-  depth: 100,
+  depth: number;
+  /**
+   * Velocity
+   */
+  maxVelocity: number;
+  jumpVelocity: number;
+  /**
+   * Can overcap velocity cap
+   */
+  dashVelocity: number;
   /**
    * Player acceleration
    */
-  acceleration: 1000,
+  acceleration: number;
   /**
-   * Snaps player to velocity if moving faster when changing directions horizontally
+   * Snaps player to set value if moving faster than
+   * set value when changing directions horizontally
    */
-  strafeCancelSnapVelocity: 100,
+  strafeCancelSnapVelocity: number;
   /**
    * Gravity Y
    */
-  gravity: 700,
+  gravity: number;
   /**
    * Drag, Friction on the player
    */
-  drag: 1000,
+  drag: number;
   /**
    * Time in miliseconds the player can hold down jump key to linger the jump velocity
    */
-  maxJumpLingeringMs: 200,
+  jumpBoostDurationMs: number;
   /**
    * Count of multi jump player can do in the air before landing
+   * Undefined for no limit
    */
-  maxMultiJumpCount: undefined,
+  multiJumpCharges?: number;
   /**
    * Count of air dashes can do in the air before landing
    * Undefined for no limit
    */
-  maxAirDashCount: undefined,
+  dashCharges?: number;
+
   /**
-   * At what rate the player with uncapped max velocity returns to normal max velocity
-   * Represented in frames per second
+   * At what rate the player with overcapped max velocity returns to normal max velocity
+   * Velocity decrease per frame
    */
-  uncappedVelocityDecayRate: 10, 
+  overcappedVelocityDecayRate: number;
+} = {
+  depth: 100,
+  maxVelocity: 700,
+  jumpVelocity: 350,
+  dashVelocity: 1300,
+  acceleration: 1000,
+  strafeCancelSnapVelocity: 100,
+  gravity: 700,
+  drag: 1000,
+  jumpBoostDurationMs: 200,
+  multiJumpCharges: undefined,
+  dashCharges: undefined,
+  overcappedVelocityDecayRate: 10, 
 };

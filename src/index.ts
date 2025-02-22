@@ -13,14 +13,17 @@ const config = {
     default: 'arcade',
     arcade: {
       gravity: { y: 0, x: 0 },
+      fixedStep: true,
+      fps: 144,
     },
-    fps: { target: 144, forceSetTimeOut: false },
-    physics: { arcade: { fixedStep: true, fps: 144 } },
   },
+  fps: { target: 144, forceSetTimeOut: false },
   scale: {
-    mode: Phaser.Scale.RESIZE, // Automatically resize to fit the screen
-    autoCenter: Phaser.Scale.CENTER_BOTH // Center the game
+    mode: Phaser.Scale.RESIZE,
+    autoCenter: Phaser.Scale.CENTER_BOTH
   },
 };
 
-const game = new Phaser.Game(config);
+new Phaser.Game(config);
+
+
