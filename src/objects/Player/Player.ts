@@ -208,10 +208,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // ################################################################
     // Dash
     // ################################################################
-    console.log(this.overcappedMaxVelocity)
     if (
       this.cursors.SHIFT.isDown 
-      && !this.isMaxVelocityDecaying() 
+      && !this.isMaxVelocityDecaying()
       && (
         this.config.dashCharges === undefined 
         || this.config.dashCharges > this.airDashCount

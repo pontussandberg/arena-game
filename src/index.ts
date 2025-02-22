@@ -1,9 +1,6 @@
 import Phaser from "phaser";
 import { Pilot } from "./Scenes";
 
-const { width: CANVAS_WIDTH, height: CANVAS_HEIGHT } = document.body.getBoundingClientRect();
-
-
 const config = {
   type: Phaser.AUTO,
   width: window.innerWidth,
