@@ -37,7 +37,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.setCollideWorldBounds(true);
     this.setGravity(0, PLAYER_CONFIG.gravity);
     this.depth = PLAYER_CONFIG.depth;
-    this.setDrag(PLAYER_CONFIG.drag, 0);
+    this.setDrag(PLAYER_CONFIG.drag.x, PLAYER_CONFIG.drag.y);
     this.setMaxVelocity(PLAYER_CONFIG.maxVelocity);
 
     if (scene.input.keyboard) {

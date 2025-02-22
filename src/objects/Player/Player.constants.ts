@@ -26,9 +26,12 @@ export const PLAYER_CONFIG: {
    */
   gravity: number;
   /**
-   * Drag, Friction on the player
+   * Drag, returning velocity back to 0 gradually when no acceleration is applied
    */
-  drag: number;
+  drag: {
+    x: number;
+    y: number;
+  };
   /**
    * Time in miliseconds the player can hold down jump key to linger the jump velocity
    */
@@ -56,7 +59,10 @@ export const PLAYER_CONFIG: {
   acceleration: 1000,
   strafeCancelSnapVelocity: 100,
   gravity: 700,
-  drag: 1000,
+  drag: {
+    x: 1000,
+    y: 100,
+  },
   jumpBoostDurationMs: 200,
   multiJumpCharges: undefined,
   dashCharges: undefined,
