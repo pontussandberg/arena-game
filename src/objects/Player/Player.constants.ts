@@ -1,13 +1,26 @@
-export const PLAYER_CONFIG = {
+export const PLAYER_CONFIG: {
+  maxVelocity: number;
+  jumpVelocity: number;
+  airDashVelocity: number;
+  depth: number;
+  acceleration: number;
+  strafeCancelSnapVelocity: number;
+  gravity: number;
+  drag: number;
+  maxJumpLingeringMs: number;
+  maxMultiJumpCount?: number;
+  maxAirDashCount?: number;
+  uncappedVelocityDecayRate: number;
+} = {
   /**
    * Velocity
    */
   maxVelocity: 700,
-  jumpVelocity: 400,
+  jumpVelocity: 350,
   /**
    * Will break velocity cap if its a greater value
    */
-  airDashVelocity: 1600,
+  airDashVelocity: 1300,
   /**
    * Rendered z-index
    */
@@ -15,7 +28,7 @@ export const PLAYER_CONFIG = {
   /**
    * Player acceleration
    */
-  acceleration: 800,
+  acceleration: 1000,
   /**
    * Snaps player to velocity if moving faster when changing directions horizontally
    */
@@ -35,11 +48,12 @@ export const PLAYER_CONFIG = {
   /**
    * Count of multi jump player can do in the air before landing
    */
-  maxMultiJumpCount: 2,
+  maxMultiJumpCount: undefined,
   /**
    * Count of air dashes can do in the air before landing
+   * Undefined for no limit
    */
-  maxAirDashCount: 2,
+  maxAirDashCount: undefined,
   /**
    * At what rate the player with uncapped max velocity returns to normal max velocity
    * Represented in frames per second

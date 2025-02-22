@@ -13,6 +13,7 @@ interface Cursors {
 export default class Player extends Phaser.Physics.Arcade.Sprite {
   private multiJumpCounter: number = 0;
   private jumpHoldTimeMs: number = 0;
+  private isJumpLingering: boolean = false;
   private isDroppingThrough: boolean = false;
   private cursors?: Cursors;
   private airDashCount: number = 0;
@@ -52,6 +53,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   getBody() {
     return this.body as Phaser.Physics.Arcade.Body;
+  }
+
+  isMaxVelocityDecaying(): boolean {
+    return this.decayingMaxVelocity !== PLAYER_CONFIG.maxVelocity
   }
 
   update() {
@@ -126,39 +131,53 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       // Air dash
       // ################################################################
       if (
-        //!body.blocked.down && 
         Phaser.Input.Keyboard.JustDown(this.cursors.SHIFT) &&
-        PLAYER_CONFIG.maxAirDashCount > this.airDashCount
+        (PLAYER_CONFIG.maxAirDashCount === undefined || PLAYER_CONFIG.maxAirDashCount > this.airDashCount) &&
+        !this.isMaxVelocityDecaying()
       ) {
-        this.airDashCount++;
-        const velocityX = this.lastDirection === "right" 
-          ? PLAYER_CONFIG.airDashVelocity 
-          : -PLAYER_CONFIG.airDashVelocity;
+        const { airDashVelocity } = PLAYER_CONFIG;
+        let hasDashed = false;
+        if (this.cursors.A.isDown) {
+          this.setVelocityX(-airDashVelocity);
+          hasDashed = true;
+        } else if (this.cursors.D.isDown) {
+          this.setVelocityX(airDashVelocity);
+          hasDashed = true;
+        }
 
-        // Uncap velocity decaying
-        this.decayingMaxVelocity = velocityX;
-        this.setVelocityX(velocityX);
+        if (hasDashed) {
+          this.decayingMaxVelocity = airDashVelocity
+
+          // Allow upwards dash angle when holding W.
+          // if (this.cursors.W.isDown) {
+          //   this.setVelocityY(-airDashVelocity/4)
+          // }
+        }
       }
       
       // ################################################################
       // Jump
       // ################################################################
+      if (this.cursors.SPACE.isUp) {
+        this.isJumpLingering = false;
+      }
       if (
         this.cursors.SPACE.isDown 
-        && (body.blocked.down || this.jumpHoldTimeMs <= PLAYER_CONFIG.maxJumpLingeringMs)
+        && (body.blocked.down || this.isJumpLingering && this.jumpHoldTimeMs <= PLAYER_CONFIG.maxJumpLingeringMs)
       ) {
         // Lingering jump boost tracker
         this.jumpHoldTimeMs = this.jumpHoldTimeMs + this.scene.game.loop.delta;
+        this.isJumpLingering = true;
         this.setVelocityY(-PLAYER_CONFIG.jumpVelocity);
       }
       // Multi jump
       else if (
         Phaser.Input.Keyboard.JustDown(this.cursors.SPACE) &&
-        this.multiJumpCounter <= PLAYER_CONFIG.maxMultiJumpCount
+        (PLAYER_CONFIG.maxMultiJumpCount === undefined || this.multiJumpCounter < PLAYER_CONFIG.maxMultiJumpCount)
       ) {
         this.jumpHoldTimeMs = 0;
         this.setVelocityY(-PLAYER_CONFIG.jumpVelocity);
-        this.multiJumpCounter++
+        this.multiJumpCounter += 1;
       }
       
       // ################################################################

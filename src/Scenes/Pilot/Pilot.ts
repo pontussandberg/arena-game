@@ -37,7 +37,8 @@ export default class Pilot extends Phaser.Scene {
     // ################################################################
     // Player
     // ################################################################
-    this.player = new Player(this, 700, 400, "player");
+    this.player = new Player(this, 700, mapHeight - groundHeight - 900, "player");
+    
 
     // ################################################################
     // Camera
@@ -64,6 +65,7 @@ export default class Pilot extends Phaser.Scene {
       new Platform(this, 8 * 1000, mapHeight - groundHeight, 'ground', { solid: true }),
       new Platform(this, 9 * 1000, mapHeight - groundHeight, 'ground', { solid: true }),
     ].forEach(object => this.groundTiles.add(object));
+
     this.physics.add.collider(this.player, this.groundTiles);
     
     // ################################################################
@@ -96,6 +98,7 @@ export default class Pilot extends Phaser.Scene {
       new GroundedPlatform(this, 1200 + 1800 * 5, mapHeight - groundHeight, 'boxLarge'),
       new GroundedPlatform(this, 1550 + 1800 * 5, mapHeight - groundHeight, 'boxSmall'),
     ].forEach(object => this.passThroughPlatforms.add(object));
+
     this.physics.add.collider(this.player, this.passThroughPlatforms, (p) => {
       const player = p as Player;
       player.standingOnPassThroughPlatform = true;
@@ -106,16 +109,16 @@ export default class Pilot extends Phaser.Scene {
     // ################################################################
     this.clouds = this.physics.add.staticGroup();
     [
-      new FullscreenBtn(this, 0 * 1000 + 100, 100, "cloudGroup"),
-      new FullscreenBtn(this, 1 * 1000 + 100, 100, "cloudGroup"),
-      new FullscreenBtn(this, 2 * 1000 + 100, 100, "cloudGroup"),
-      new FullscreenBtn(this, 3 * 1000 + 100, 100, "cloudGroup"),
-      new FullscreenBtn(this, 4 * 1000 + 100, 100, "cloudGroup"),
-      new FullscreenBtn(this, 5 * 1000 + 100, 100, "cloudGroup"),
-      new FullscreenBtn(this, 6 * 1000 + 100, 100, "cloudGroup"),
-      new FullscreenBtn(this, 7 * 1000 + 100, 100, "cloudGroup"),
-      new FullscreenBtn(this, 8 * 1000 + 100, 100, "cloudGroup"),
-      new FullscreenBtn(this, 9 * 1000 + 100, 100, "cloudGroup"),
+      new FullscreenBtn(this, 0 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
+      new FullscreenBtn(this, 1 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
+      new FullscreenBtn(this, 2 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
+      new FullscreenBtn(this, 3 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
+      new FullscreenBtn(this, 4 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
+      new FullscreenBtn(this, 5 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
+      new FullscreenBtn(this, 6 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
+      new FullscreenBtn(this, 7 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
+      new FullscreenBtn(this, 8 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
+      new FullscreenBtn(this, 9 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
     ].forEach(object => this.clouds.add(object))
   }
 
