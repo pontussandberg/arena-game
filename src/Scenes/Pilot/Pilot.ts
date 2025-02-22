@@ -99,9 +99,12 @@ export default class Pilot extends Phaser.Scene {
       new GroundedPlatform(this, 1550 + 1800 * 5, mapHeight - groundHeight, 'boxSmall'),
     ].forEach(object => this.passThroughPlatforms.add(object));
 
-    this.physics.add.collider(this.player, this.passThroughPlatforms, (p) => {
-      const player = p as Player;
-      player.standingOnPassThroughPlatform = true;
+    this.physics.add.collider(this.player, this.passThroughPlatforms, (_player, _platform) => {
+      const player = _player as Player;
+      const platform = _platform as Platform;
+      if (Math.abs(platform.y) === Math.abs(player.y + player.height / 2)) {
+        player.standingOnPassThroughPlatform = true;
+      }
     });
 
     // ################################################################
