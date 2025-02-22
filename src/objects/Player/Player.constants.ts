@@ -43,7 +43,6 @@ export const PLAYER_CONFIG: {
    * Undefined for no limit
    */
   dashCharges?: number;
-
   /**
    * At what rate the player with overcapped max velocity returns to normal max velocity
    * Velocity decrease per frame
