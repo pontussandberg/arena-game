@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { PLAYER_CONFIG  } from "./Player.constants";
 import { MouseFollower } from "../MouseFollower";
 import { PlayerConfig } from "./Player.types";
+import { GameOverlay } from "../GameOverlay";
 
 interface Cursors {
   W: Phaser.Input.Keyboard.Key;
@@ -22,6 +23,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   private cursors?: Cursors;
   private airDashCount: number = 0;
   private lastDirection: "left" | "right" = "right";
+  private gameOverlay!: GameOverlay;
   /**
    * Whenever this is set to a greater value than provided in the config
    * the max movement velocity will decay from the value back to base value
@@ -33,6 +35,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
    * drop-through mechanic to work.
    */
   public standingOnPassThroughPlatform: boolean = false;
+
+  private hp!: number;
+  private maxHp!: number;
 
   constructor(
     scene: Phaser.Scene, 
@@ -47,8 +52,17 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.config = config;
     this.depth = config.depth;
     this.overcappedMaxVelocity = config.overcappedVelocityDecayRate;
+    this.hp = config.baseHp;
+    this.maxHp = config.baseHp;
+    
+    // ################################################################
+    // Init Game Overlay
+    // ################################################################
+    this.gameOverlay = new GameOverlay(scene, this, this.hp, this.maxHp);
 
-    // Init mouse follower
+    // ################################################################
+    // Init Mouse Follower
+    // ################################################################
     this.mouseFollower = new MouseFollower(
       scene, 
       this, 
@@ -81,6 +95,30 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
+  // ################################################################
+  // Health
+  // ################################################################
+  public updateHealth(hp: number) {
+    this.hp = hp;
+    this.gameOverlay.updateHealth(hp);
+  }
+  public getHp() {
+    return this.hp;
+  }
+  public getMaxHp() {
+    return this.maxHp;
+  }
+
+  /**
+   * Get typed body
+   */
+  public getBody() {
+    return this.body as Phaser.Physics.Arcade.Body;
+  }
+
+  /**
+   * Apply a velocity towards mouseFollower.mouseAngle
+   */
   private applyVelocityTowardsMouse(velocity: number) {
     // Retrieve pre-calculated angle from MouseFollower
     const angle = this.mouseFollower.mouseAngle;
@@ -99,11 +137,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.setVelocity(velX, velY);
   }
 
-  public getBody() {
-    return this.body as Phaser.Physics.Arcade.Body;
-  }
-
-  private isMaxVelocityDecaying(): boolean {
+  /**
+   * Check if velocity is overcapped with overcappedMaxVelocity
+   */
+  private hasOvercappedMaxVelocity(): boolean {
     return this.overcappedMaxVelocity !== this.config.maxVelocity
   }
 
@@ -246,7 +283,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // ################################################################
     if (
       this.cursors.SHIFT.isDown 
-      && (this.config.noDashDelay || !this.isMaxVelocityDecaying())
+      && (this.config.noDashDelay || !this.hasOvercappedMaxVelocity())
       && (
         this.config.dashCharges === undefined 
         || this.config.dashCharges > this.airDashCount

@@ -17,4 +17,5 @@ export const PLAYER_CONFIG: PlayerConfig = {
   dashCharges: 3,
   // noDashDelay: true,
   overcappedVelocityDecayRate: 10, 
+  baseHp: 100,
 };

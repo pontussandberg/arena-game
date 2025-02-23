@@ -56,4 +56,8 @@ export interface PlayerConfig {
    * Velocity decrease per frame
    */
   overcappedVelocityDecayRate: number;
+  /**
+   * Base HP
+   */
+  baseHp: 100;
 }

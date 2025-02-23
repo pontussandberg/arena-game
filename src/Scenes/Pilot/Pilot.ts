@@ -9,14 +9,14 @@ import { Platform, Player } from "../../objects";
 import { FullscreenBtn } from "../../objects/FullscreenBtn"
 import { GroundedPlatform } from "../../objects/GroundedPlatform/GroundedPlatform"
 import { SCENE_CONFIG } from "./Pilot.constants"
-import { MouseFollower } from "../../objects/MouseFollower"
+import { GameOverlay } from "../../objects/GameOverlay"
 
 export default class Pilot extends Phaser.Scene {
   private player!: Player;
-  // Platforms that let players through from below
   private passThroughPlatforms!: Phaser.Physics.Arcade.StaticGroup;
   private groundTiles!: Phaser.Physics.Arcade.StaticGroup;
   private clouds!: Phaser.Physics.Arcade.StaticGroup;
+  private gameOverlay!: GameOverlay;
 
   preload() {
     this.load.image('boxSmall', boxSmall);
@@ -47,7 +47,6 @@ export default class Pilot extends Phaser.Scene {
     this.cameras.main.startFollow(this.player);
     this.physics.world.setBounds(0, 0, mapWidth, mapHeight);
     this.cameras.main.setBounds(0, 0, mapWidth, mapHeight);
-
 
     // ################################################################
     // Create Solid platforms
