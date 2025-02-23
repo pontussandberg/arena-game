@@ -4,7 +4,7 @@ import ground from "../../assets/ground.png"
 import player from "../../assets/player.png"
 import mouseFollower from "../../assets/mouse-follower.png"
 import cloudGroup from "../../assets/cloud-group.png"
-import bow from "../../assets/bow.png";
+import bow from "../../assets/weapons/bow.png";
 import { Platform, Player } from "../../objects";
 import { FullscreenBtn } from "../../objects/FullscreenBtn"
 import { GroundedPlatform } from "../../objects/GroundedPlatform/GroundedPlatform"
@@ -17,7 +17,6 @@ export default class Pilot extends Phaser.Scene {
   private passThroughPlatforms!: Phaser.Physics.Arcade.StaticGroup;
   private groundTiles!: Phaser.Physics.Arcade.StaticGroup;
   private clouds!: Phaser.Physics.Arcade.StaticGroup;
-  private mouseFollower!: MouseFollower;
 
   preload() {
     this.load.image('boxSmall', boxSmall);
@@ -25,7 +24,6 @@ export default class Pilot extends Phaser.Scene {
     this.load.image('ground', ground);
     this.load.image('player', player);
     this.load.image('cloudGroup', cloudGroup);
-    this.load.image('mouseFollower', mouseFollower);
     this.load.image('bow', bow);
   }
 
