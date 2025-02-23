@@ -62,8 +62,6 @@ export default class MouseFollower extends Phaser.Physics.Arcade.Sprite {
   private show() {
     this.setVisible(true);
     this.setAlpha(1);
-
-    // Enable physics
     this.getBody().setEnable(true);
   }
 
@@ -71,8 +69,6 @@ export default class MouseFollower extends Phaser.Physics.Arcade.Sprite {
   private hide() {
     this.setVisible(false);
     this.setAlpha(0);
-
-    // Disable physics
     this.getBody().setEnable(false);
   }
 
@@ -106,7 +102,7 @@ export default class MouseFollower extends Phaser.Physics.Arcade.Sprite {
     this.y += ((this.player.y + dy) - this.y) * this.followSpeed;
     this.x += ((this.player.x + dx) - this.x) * this.followSpeed;
 
-    // ✅ Keep rotation so the asset points toward the player
+    // Keep rotation so the asset points toward the player
     this.rotation = this.mouseAngle;
   }
 }
