@@ -9,7 +9,7 @@ export default class MouseFollower extends Phaser.Physics.Arcade.Sprite {
     super(scene, player.x, player.y, texture);
 
     // This
-    const gapFromBody = -10;
+    const gapFromBody = 30;
     this.maxRadius = player.getBody().width + gapFromBody
 
     scene.add.existing(this);

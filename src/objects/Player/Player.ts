@@ -178,6 +178,15 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     // ################################################################
+    // Flip sprite asset to match velocity
+    // ################################################################
+    if (body.velocity.x > 0) {
+      this.setFlipX(false);
+    } else if (body.velocity.x < 0) {
+      this.setFlipX(true);
+    }
+
+    // ################################################################
     // Move horizontally
     // ################################################################
     if (this.cursors.A.isDown) {
