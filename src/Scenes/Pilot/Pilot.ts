@@ -66,6 +66,7 @@ export default class Pilot extends Phaser.Scene {
     ].forEach(object => this.groundTiles.add(object));
 
     this.physics.add.collider(this.player, this.groundTiles, (_player) => {
+      /**
       const player = _player as Player;
 
       // Use Phaser's built-in speed property
@@ -76,6 +77,7 @@ export default class Pilot extends Phaser.Scene {
   
         player.takeDamage(20);
       }
+      */
     });
     
     // ################################################################
