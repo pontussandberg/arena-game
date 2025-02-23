@@ -70,32 +70,23 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  private applyVelocityTowardsArrow(velocity: number) {
-    // Get direction vector from player to MouseFollower
-    const dx = this.mouseFollower.x - this.x;
-    const dy = this.mouseFollower.y - this.y;
+  private applyVelocityTowardsMouse(velocity: number) {
+    // Retrieve pre-calculated angle from MouseFollower
+    const angle = this.mouseFollower.mouseAngle;
   
-    // Normalize the direction vector (to ensure consistent movement speed)
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    if (distance === 0) return; // Prevent division by zero
-  
-    const normalizedDx = dx / distance;
-    const normalizedDy = dy / distance;
+    // Calculate velocity components using stored angle
+    const velX = Math.cos(angle) * velocity;
+    const velY = Math.sin(angle) * velocity;
 
-    const velX = normalizedDx * velocity
-    const velY = normalizedDy * velocity
-
-    // Adjust sprite direction
-    if (velX < 0) {
-      this.setFlipX(true);
-    } else if (velX > 0) {
-      this.setFlipX(false);
-    }
+    // Overcap the velocity
+    this.overcappedMaxVelocity = this.config.dashVelocity;
   
-    // Apply velocity in that direction
+    // Adjust sprite direction based on movement
+    this.setFlipX(velX < 0);
+  
+    // Apply velocity
     this.setVelocity(velX, velY);
   }
-  
 
   public getBody() {
     return this.body as Phaser.Physics.Arcade.Body;
@@ -134,11 +125,33 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.setVelocityY(-this.config.jumpVelocity);
   }
 
+  private resetRotation() {
+    this.scene.tweens.add({
+      targets: this,
+      rotation: 0,  // Reset back to default upright position
+      duration: 500,  // Time in ms for smooth transition
+      ease: "Quad.easeOut",  // Smooth easing effect
+    });
+  }  
+
   private performDash() {
     this.airDashCount++;
-    this.overcappedMaxVelocity = this.config.dashVelocity;
-    this.applyVelocityTowardsArrow(this.config.dashVelocity);
+    this.applyVelocityTowardsMouse(this.config.dashVelocity);
+    this.mouseFollower.hideOverDuration(700);
+
+    // ################################################################
+    // Rotate towards dash
+    // ################################################################
+    // Cancel any existing rotation tweens before applying a new dash rotation
+    this.scene.tweens.killTweensOf(this);
+    this.setRotation(this.mouseFollower.mouseAngle + Math.PI / 2);
+    this.scene.time.addEvent({
+      delay: 300, // Wait before starting reset
+      callback: () => this.resetRotation(),
+      callbackScope: this,
+    });
   }
+  
 
   private canJumpBoost(): boolean {
     return this.jumpHoldTimeMs < this.config.jumpBoostDurationMs
@@ -222,7 +235,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // ################################################################
     if (
       this.cursors.SHIFT.isDown 
-      && !this.isMaxVelocityDecaying()
+      && (this.config.noDashDelay || !this.isMaxVelocityDecaying())
       && (
         this.config.dashCharges === undefined 
         || this.config.dashCharges > this.airDashCount

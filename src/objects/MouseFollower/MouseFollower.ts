@@ -1,9 +1,15 @@
 import { Player } from "../Player";
 
 export default class MouseFollower extends Phaser.Physics.Arcade.Sprite {
-  private followSpeed: number = 0.8  ; // Speed factor (closer to 1 = faster)
-  private maxRadius: number = 100; // Maximum allowed distance from the player
-  private player: Phaser.GameObjects.Sprite; // The player reference
+  private player: Phaser.GameObjects.Sprite;
+  // Speed factor (closer to 1 = faster)
+  private followSpeed: number = 0.8; 
+   // Maximum allowed distance from the player
+  private maxRadius: number = 100;
+  // The angle from player center to mouse position
+  public mouseAngle: number = 0;
+  // Timeout used to momentarely hide the mouse follower
+  private hideTimeout: NodeJS.Timeout | null = null;
 
   constructor(scene: Phaser.Scene, player: Player, texture: string, depth: number) {
     super(scene, player.x, player.y, texture);
@@ -13,11 +19,39 @@ export default class MouseFollower extends Phaser.Physics.Arcade.Sprite {
 
     const gapFromBody = 20;
     this.maxRadius = player.getBody().width + gapFromBody
-
-    this.setCircle(10); // Optional: Set a circular physics body
-    this.setCollideWorldBounds(true); // Prevent it from leaving world bounds
-
     this.player = player;
+  }
+
+  private getBody() {
+    return this.body as Phaser.Physics.Arcade.Body;
+  }
+
+  public hideOverDuration(ms: number) {
+    this.hide();
+    if (this.hideTimeout) {
+      clearTimeout(this.hideTimeout);
+    }
+    this.hideTimeout = setTimeout(() => {
+      this.show();
+    }, ms) ;
+  }
+
+  // Render the object visually and physically
+  private show() {
+    this.setVisible(true);
+    this.setAlpha(1);
+
+    // Enable physics
+    this.getBody().setEnable(true);
+  }
+
+  // Dont render the object visually and physically
+  private hide() {
+    this.setVisible(false);
+    this.setAlpha(0);
+
+    // Disable physics
+    this.getBody().setEnable(false);
   }
 
   update() {
@@ -33,9 +67,12 @@ export default class MouseFollower extends Phaser.Physics.Arcade.Sprite {
     let dy = targetY - this.player.y;
     let distance = Math.sqrt(dx * dx + dy * dy);
 
+    // Store angle on instance for external access
+    const angle = Math.atan2(dy, dx);
+    this.mouseAngle = angle;
+
     if (distance > this.maxRadius) {
       // Limit movement to within the max radius
-      const angle = Math.atan2(dy, dx);
       dx = Math.cos(angle) * this.maxRadius;
       dy = Math.sin(angle) * this.maxRadius;
     }

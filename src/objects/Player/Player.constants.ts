@@ -13,7 +13,8 @@ export const PLAYER_CONFIG: PlayerConfig = {
     y: 100,
   },
   jumpBoostDurationMs: 200,
-  multiJumpCharges: undefined,
-  dashCharges: 2,
+  multiJumpCharges: 3,
+  dashCharges: 3,
+  // noDashDelay: true,
   overcappedVelocityDecayRate: 10, 
 };

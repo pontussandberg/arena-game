@@ -47,6 +47,11 @@ export interface PlayerConfig {
    */
   dashCharges?: number;
   /**
+   * Disable the mechanic that limits dashing before 
+   * overcapped velocity has been reset
+   */
+  noDashDelay?: boolean;
+  /**
    * At what rate the player with overcapped max velocity returns to normal max velocity
    * Velocity decrease per frame
    */
