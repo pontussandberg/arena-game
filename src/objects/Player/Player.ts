@@ -81,9 +81,19 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   
     const normalizedDx = dx / distance;
     const normalizedDy = dy / distance;
+
+    const velX = normalizedDx * velocity
+    const velY = normalizedDy * velocity
+
+    // Adjust sprite direction
+    if (velX < 0) {
+      this.setFlipX(true);
+    } else if (velX > 0) {
+      this.setFlipX(false);
+    }
   
     // Apply velocity in that direction
-    this.setVelocity(normalizedDx * velocity, normalizedDy * velocity);
+    this.setVelocity(velX, velY);
   }
   
 
@@ -178,21 +188,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     // ################################################################
-    // Flip sprite asset to match velocity
-    // ################################################################
-    if (body.velocity.x > 0) {
-      this.setFlipX(false);
-    } else if (body.velocity.x < 0) {
-      this.setFlipX(true);
-    }
-
-    // ################################################################
     // Move horizontally
     // ################################################################
     if (this.cursors.A.isDown) {
+      this.setFlipX(true);
       this.setAccelerationX(-this.config.acceleration);
       this.lastDirection = "left";
     } else if (this.cursors.D.isDown) {
+      this.setFlipX(false);
       this.setAccelerationX(this.config.acceleration);
       this.lastDirection = "right";
     } else {
