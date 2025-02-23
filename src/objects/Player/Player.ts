@@ -98,15 +98,22 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   // ################################################################
   // Health
   // ################################################################
-  public updateHealth(hp: number) {
+  private updateHealth(hp: number) {
     this.hp = hp;
     this.gameOverlay.updateHealth(hp);
+  }
+  public takeDamage(damage: number) {
+    this.updateHealth(Phaser.Math.Clamp(this.hp - damage, 0, this.maxHp));
   }
   public getHp() {
     return this.hp;
   }
   public getMaxHp() {
     return this.maxHp;
+  }
+
+  public getBaseMaxVelocity() {
+    return this.config.maxVelocity;
   }
 
   /**
@@ -206,6 +213,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   public update() {
+    console.log(this.hp)
     this.mouseFollower.update();
      
     if (!this.cursors) {

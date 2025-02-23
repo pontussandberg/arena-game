@@ -19,7 +19,7 @@ export class HealthBar extends Phaser.GameObjects.Container {
     super(scene, 0, 0);
     this.player = player;
     this.hp = hp;
-    this.maxHp = 300;
+    this.maxHp = maxHp;
 
     scene.add.existing(this);
 

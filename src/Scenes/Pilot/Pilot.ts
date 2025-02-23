@@ -65,7 +65,18 @@ export default class Pilot extends Phaser.Scene {
       new Platform(this, 9 * 1000, mapHeight - groundHeight, 'ground', { solid: true }),
     ].forEach(object => this.groundTiles.add(object));
 
-    this.physics.add.collider(this.player, this.groundTiles);
+    this.physics.add.collider(this.player, this.groundTiles, (_player) => {
+      const player = _player as Player;
+
+      // Use Phaser's built-in speed property
+      const impactSpeed = player.getBody().speed;
+  
+      if (impactSpeed > player.getBaseMaxVelocity()) {
+        console.log(`Impact speed: ${impactSpeed}`);
+  
+        player.takeDamage(20);
+      }
+    });
     
     // ################################################################
     // Create Ground boxes
@@ -105,6 +116,8 @@ export default class Pilot extends Phaser.Scene {
         player.standingOnPassThroughPlatform = true;
       }
     });
+
+
 
     // ################################################################
     // Create Clouds
