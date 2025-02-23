@@ -49,7 +49,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.overcappedMaxVelocity = config.overcappedVelocityDecayRate;
 
     // Init mouse follower
-    this.mouseFollower = new MouseFollower(scene, this, "bow");
+    this.mouseFollower = new MouseFollower(scene, this, "bow", config.depth);
 
     // Physics
     this.setCollideWorldBounds(true);

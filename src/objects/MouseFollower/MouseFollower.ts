@@ -5,15 +5,14 @@ export default class MouseFollower extends Phaser.Physics.Arcade.Sprite {
   private maxRadius: number = 100; // Maximum allowed distance from the player
   private player: Phaser.GameObjects.Sprite; // The player reference
 
-  constructor(scene: Phaser.Scene, player: Player, texture: string) {
+  constructor(scene: Phaser.Scene, player: Player, texture: string, depth: number) {
     super(scene, player.x, player.y, texture);
-
-    // This
-    const gapFromBody = 20;
-    this.maxRadius = player.getBody().width + gapFromBody
-
     scene.add.existing(this);
     scene.physics.add.existing(this); // Add physics body
+    this.depth = depth;
+
+    const gapFromBody = 20;
+    this.maxRadius = player.getBody().width + gapFromBody
 
     this.setCircle(10); // Optional: Set a circular physics body
     this.setCollideWorldBounds(true); // Prevent it from leaving world bounds
