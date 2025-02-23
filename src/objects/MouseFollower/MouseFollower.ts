@@ -88,11 +88,10 @@ export default class MouseFollower extends Phaser.Physics.Arcade.Sprite {
     this.mouseAngle = Math.atan2(dy, dx);
 
     // Check if the point is outside the oval constraint
-    const { height: playerHeight, width: playerWidth } = this.player.getBody();
     const ellipseValue = (dx * dx) / (this.maxRadiusX * this.maxRadiusX) + (dy * dy) / (this.maxRadiusY * this.maxRadiusY);
 
+    // The point is outside the oval, project it back onto the ellipse
     if (ellipseValue > 1) {
-      // The point is outside the oval, project it back onto the ellipse
       const scaleFactor = Math.sqrt(1 / ellipseValue); 
       dx *= scaleFactor;
       dy *= scaleFactor;
