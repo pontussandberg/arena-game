@@ -22,12 +22,7 @@ export class Projectile extends Phaser.Physics.Arcade.Sprite {
     // Add to scene and enable physics
     scene.add.existing(this);
 
-    // Doesn't need as long as they are rendered added to a group
-    // scene.physics.add.existing(this);
-    
     // Delay firing until the first update cycle to ensure the physics body is fully initialized. 
-    // When added to a Phaser.Physics.Arcade.Group, the body may not be immediately available,
-    // and setting velocity too early can be ignored.
     scene.events.once("update", () => {
       if (this.body) {
         this.setVelocity(velocityX, velocityY);
@@ -35,6 +30,14 @@ export class Projectile extends Phaser.Physics.Arcade.Sprite {
         this.setCollideWorldBounds(true);
       }
     });
+  }
+
+  preUpdate() {
+    if (this.body) {
+      // Rotate the projectile based on velocity, taking gravity into account
+      const angle = Math.atan2(this.body.velocity.y, this.body.velocity.x);
+      this.setRotation(angle + Phaser.Math.DEG_TO_RAD * 90);
+    }
   }
 
   handleCollision(target: Phaser.GameObjects.GameObject) {

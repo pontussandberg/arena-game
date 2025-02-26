@@ -2,14 +2,13 @@ import boxSmall from "../../assets/box_small.png"
 import boxLarge from "../../assets/box_large.png"
 import ground from "../../assets/ground.png"
 import player from "../../assets/player.png"
-import mouseFollower from "../../assets/mouse-follower.png"
+import arrow from "../../assets/arrow.png"
 import cloudGroup from "../../assets/cloud-group.png"
 import bow from "../../assets/weapons/bow.png";
 import { Platform, Player } from "../../objects";
 import { FullscreenBtn } from "../../objects/FullscreenBtn"
 import { GroundedPlatform } from "../../objects/GroundedPlatform/GroundedPlatform"
 import { SCENE_CONFIG } from "./Pilot.constants"
-import { GameOverlay } from "../../objects/GameOverlay"
 import { Projectile } from "../../objects/Projectile"
 import { ProjectileManager } from "../../core/ProjectileManager"
 import BaseScene from "../BaseScene"
@@ -32,6 +31,7 @@ export default class Pilot extends BaseScene {
     this.load.image('player', player);
     this.load.image('cloudGroup', cloudGroup);
     this.load.image('bow', bow);
+    this.load.image('arrow', arrow);
   }
 
   create() {

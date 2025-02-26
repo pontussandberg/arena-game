@@ -266,11 +266,14 @@ export default class Player extends Organism {
       this.setAccelerationX(0); 
     }
 
+    // ################################################################
+    // Fire arrow
+    // ################################################################
     if (Phaser.Input.Keyboard.JustDown(this.cursors.W)) {
       const { velX, velY } = this.getVelocityTowardsMouse(1000);
       this.projectileManager.fireProjectile(
         this, 
-        "", 
+        "arrow", 
         velX, 
         velY,
         15,
