@@ -1,3 +1,5 @@
+import { OrganismOptions } from "../Organism";
+
 export interface PlayerConfig {
   /**
    * Rendered z-index
@@ -22,17 +24,6 @@ export interface PlayerConfig {
    */
   strafeCancelSnapVelocity: number;
   /**
-   * Gravity Y
-   */
-  gravity: number;
-  /**
-   * Drag, returning velocity back to 0 gradually when no acceleration is applied
-   */
-  drag: {
-    x: number;
-    y: number;
-  };
-  /**
    * Time in miliseconds the player can hold down jump key to linger the jump velocity
    */
   jumpBoostDurationMs: number;
@@ -56,8 +47,5 @@ export interface PlayerConfig {
    * Velocity decrease per frame
    */
   overcappedVelocityDecayRate: number;
-  /**
-   * Base HP
-   */
-  baseHp: 100;
+  organismOptions: OrganismOptions;
 }

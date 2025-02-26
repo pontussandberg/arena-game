@@ -7,15 +7,17 @@ export const PLAYER_CONFIG: PlayerConfig = {
   dashVelocity: 1300,
   acceleration: 1000,
   strafeCancelSnapVelocity: 100,
-  gravity: 700,
-  drag: {
-    x: 1000,
-    y: 100,
-  },
   jumpBoostDurationMs: 200,
-  multiJumpCharges: 3,
-  dashCharges: 3,
+  //multiJumpCharges: 3,
+  //dashCharges: 3,
   // noDashDelay: true,
   overcappedVelocityDecayRate: 10, 
-  baseHp: 100,
+  organismOptions: {
+    maxHealth: 100,
+    gravity: 700,
+    drag: {
+      x: 1000,
+      y: 100,
+    },
+  },
 };

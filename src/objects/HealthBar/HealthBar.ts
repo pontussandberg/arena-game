@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { Player } from "../../Player";
+import { Organism } from "../Organism";
 
 const HP_BAR_WIDTH = 60;
 const HP_BAR_HEIGHT = 8;
@@ -7,7 +7,7 @@ const HP_SEGMENT_GAP = 25;
 const ENABLE_HEALTH_SEGMENTS = false;
 
 export class HealthBar extends Phaser.GameObjects.Container {
-  private player: Player;
+  private organism: Organism;
   private healthBarBg: Phaser.GameObjects.Rectangle;
   private healthBarFill: Phaser.GameObjects.Rectangle;
   private healthBarSlackingFill: Phaser.GameObjects.Rectangle;
@@ -15,9 +15,9 @@ export class HealthBar extends Phaser.GameObjects.Container {
   private maxHp: number;
   private hp: number;
 
-  constructor(scene: Phaser.Scene, player: Player, hp: number, maxHp: number) {
-    super(scene, 0, 0);
-    this.player = player;
+  constructor(scene: Phaser.Scene, organism: Organism, hp: number, maxHp: number) {
+    super(scene, organism.x, organism.y);
+    this.organism = organism;
     this.hp = hp;
     this.maxHp = maxHp;
 
@@ -71,17 +71,14 @@ export class HealthBar extends Phaser.GameObjects.Container {
   }
 
   private setHealthBarPosition() {
-    const camera = this.scene.cameras.main;
-    const screenX = this.player.x - camera.scrollX;
-    const screenY = this.player.y - camera.scrollY;
-    this.setPosition(screenX, screenY - (this.player.getBody().height / 2) - 30);
+    this.setPosition(this.organism.x, this.organism.y - (this.organism.getBody().height / 2) - 30);
   }
 
   /**
-   * Updates the health bar position relative to the player.
+   * Updates the health bar position relative to the organism.
    */
   public preUpdate() {
-    this.setHealthBarPosition()
+    this.setHealthBarPosition();
   }
 
   /**

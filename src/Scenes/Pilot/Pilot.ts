@@ -10,13 +10,19 @@ import { FullscreenBtn } from "../../objects/FullscreenBtn"
 import { GroundedPlatform } from "../../objects/GroundedPlatform/GroundedPlatform"
 import { SCENE_CONFIG } from "./Pilot.constants"
 import { GameOverlay } from "../../objects/GameOverlay"
+import { Projectile } from "../../objects/Projectile"
+import { ProjectileManager } from "../../core/ProjectileManager"
 
 export default class Pilot extends Phaser.Scene {
   private player!: Player;
   private passThroughPlatforms!: Phaser.Physics.Arcade.StaticGroup;
   private groundTiles!: Phaser.Physics.Arcade.StaticGroup;
   private clouds!: Phaser.Physics.Arcade.StaticGroup;
-  private gameOverlay!: GameOverlay;
+  private projectileManager!: ProjectileManager;
+
+  constructor() {
+    super({ key: "Pilot" });
+  }
 
   preload() {
     this.load.image('boxSmall', boxSmall);
@@ -36,9 +42,32 @@ export default class Pilot extends Phaser.Scene {
     } = SCENE_CONFIG;
 
     // ################################################################
+    // Projectile Manager
+    // ################################################################
+    this.projectileManager = new ProjectileManager(this);
+
+    // ################################################################
     // Player
     // ################################################################
-    this.player = new Player(this, 700, mapHeight - groundHeight - 900, "player");
+    this.player = new Player(
+      this, 
+      700, 
+      mapHeight - groundHeight - 900, 
+      "player", 
+      () => this.restartScene(),
+      this.projectileManager
+    );
+
+    this.physics.add.collider(
+      this.player, 
+      this.projectileManager.getProjectilesGroup(), 
+      (player, projectile) => {
+        console.log("here")
+        if (player instanceof Player && projectile instanceof Projectile) {
+          projectile.handleCollision(player);
+        }
+      },
+    )
     
     // ################################################################
     // Camera
@@ -142,4 +171,30 @@ export default class Pilot extends Phaser.Scene {
   update() {
     this.player.update();
   }
+
+  restartScene() {  
+    // Ensure physics exists before pausing
+    if (this.physics && this.physics.world) {
+      this.physics.pause();
+    } else {
+      console.warn("🚨 Warning: Physics system not available during restart!");
+    }
+  
+    // Ensure tweens exist before killing them
+    if (this.tweens) {
+      this.tweens.killAll();
+    }
+  
+    // Check if `this.time` exists, otherwise restart immediately
+    if (this.time) {
+      this.time.delayedCall(50, () => {
+        this.scene.start(this.scene.key);
+      });
+    } else {
+      console.warn("🚨 Warning: Timer system not available. Restarting immediately.");
+      this.scene.start(this.scene.key);
+    }
+  }
+  
+  
 }
