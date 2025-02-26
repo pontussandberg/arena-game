@@ -5,6 +5,7 @@ import { PlayerConfig } from "./Player.types";
 import { GameOverlay } from "../GameOverlay";
 import { Organism } from "../Organism";
 import { ProjectileManager } from "../../core/ProjectileManager";
+import BaseScene from "../../Scenes/BaseScene";
 
 interface Cursors {
   W: Phaser.Input.Keyboard.Key;
@@ -39,11 +40,10 @@ export default class Player extends Organism {
   public standingOnPassThroughPlatform: boolean = false;
 
   constructor(
-    scene: Phaser.Scene, 
+    scene: BaseScene, 
     x: number, 
     y: number, 
     texture: string,
-    onDie: () => void,
     projectileManager: ProjectileManager,
     config: PlayerConfig = PLAYER_CONFIG,
   ) {
@@ -52,7 +52,7 @@ export default class Player extends Organism {
       x, 
       y, 
       texture, 
-      onDie, 
+      scene.restartScene,
       config.organismOptions
     );
     scene.add.existing(this);
