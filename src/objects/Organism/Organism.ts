@@ -54,7 +54,6 @@ export class Organism extends Phaser.Physics.Arcade.Sprite {
     // HP Bar
     // ################################################################
     this.healthBar = new HealthBar(scene, this, maxHealth, maxHealth);
-    console.log("gravity",gravity)
   }
 
   takeDamage(amount: number): void {
