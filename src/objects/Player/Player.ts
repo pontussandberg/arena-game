@@ -34,7 +34,6 @@ export default class Player extends Organism {
   private cursors?: Cursors;
   private airDashCount: number = 0;
   private projectileManager!: ProjectileManager;
-  private lastAttackTime: number = 0;
   private lastDashTime: number = 0;
   private cooldownBar: CooldownBar;
   /**
@@ -132,15 +131,13 @@ export default class Player extends Organism {
   // Weapon mechanics
   // ################################################################
   private canAttack(): boolean {
-    const weapon = this.equippedWeapon;
-    if (!weapon) return false;
-    return this.scene.time.now - this.lastAttackTime >= (this.equippedWeapon?.attackSpeed || 0);
+    return this.cooldownBar.remainingCooldown === 0;
   }
 
   private attack() {
     if (this.canAttack()) {
       this.cooldownBar.startCooldown(this.equippedWeapon?.attackSpeed ?? 0);
-      this.lastAttackTime = this.scene.time.now;
+
       if (this.equippedWeapon?.id === WeaponId.spear) {
         this.throwSpear();
       } else if (this.equippedWeapon?.id === WeaponId.bow) {
@@ -195,7 +192,8 @@ export default class Player extends Organism {
 
   equipWeapon(weapon: Weapon | null) {
     this.bodyFollower.setControlledItemVisibility(WeaponId.spear ?? "", weapon?.id === WeaponId.spear);
-
+    this.cooldownBar.startCooldown(weapon?.attackSpeed ?? 0, true);
+    
     /**
      * No weapon equipped
      */

@@ -42,6 +42,10 @@ export class BodyFollower extends Phaser.GameObjects.Container {
   }
 
   setControlledItemVisibility(id: string, show: boolean) {
+    if (this.hideTimeout) {
+      clearTimeout(this.hideTimeout);
+    }
+
     const found = this.controlledImages.get(id);
     if (found) {
       found.setVisible(show);
@@ -57,10 +61,8 @@ export class BodyFollower extends Phaser.GameObjects.Container {
 
   hideControlledItemOverDuration(id: string, ms: number) {
     this.setControlledItemVisibility(id, false);
-    if (this.hideTimeout) {
-      clearTimeout(this.hideTimeout);
-    }
 
+    // Timeout is cleared when setting the visibility
     this.hideTimeout = setTimeout(() => {
       this.setControlledItemVisibility(id, true);
     }, ms);
