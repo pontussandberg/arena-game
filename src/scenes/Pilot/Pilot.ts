@@ -2,16 +2,18 @@ import boxSmall from "../../assets/box_small.png"
 import boxLarge from "../../assets/box_large.png"
 import ground from "../../assets/ground.png"
 import player from "../../assets/player.png"
-import arrow from "../../assets/arrow.png"
+import arrow from "../../assets/projectiles/arrow.png"
+import spear from "../../assets/projectiles/spear.png"
 import cloudGroup from "../../assets/cloud-group.png"
 import bow from "../../assets/weapons/bow.png";
+import pointer from "../../assets/pointer.png";
 import { Platform, Player } from "../../objects";
 import { FullscreenBtn } from "../../objects/FullscreenBtn"
 import { GroundedPlatform } from "../../objects/GroundedPlatform/GroundedPlatform"
-import { SCENE_CONFIG } from "./Pilot.constants"
-import { Projectile } from "../../objects/Projectile"
-import { ProjectileManager } from "../../core/ProjectileManager"
-import BaseScene from "../BaseScene"
+import { SCENE_CONFIG, Textures } from "./Pilot.constants"
+import { ProjectileManager } from "../../objects/ProjectileManager/ProjectileManager"
+import { BaseScene } from "../BaseScene";
+import { BaseProjectile } from "../../objects/ProjectileManager/Projectiles/BaseProjectile"
 
 export default class Pilot extends BaseScene {
   private player!: Player;
@@ -19,19 +21,23 @@ export default class Pilot extends BaseScene {
   private groundTiles!: Phaser.Physics.Arcade.StaticGroup;
   private clouds!: Phaser.Physics.Arcade.StaticGroup;
   private projectileManager!: ProjectileManager;
+  public texturesMap = Textures;
 
   constructor() {
     super({ key: "Pilot" });
+    this.texturesMap = Textures;
   }
 
   preload() {
-    this.load.image('boxSmall', boxSmall);
-    this.load.image('boxLarge', boxLarge);
-    this.load.image('ground', ground);
-    this.load.image('player', player);
-    this.load.image('cloudGroup', cloudGroup);
-    this.load.image('bow', bow);
-    this.load.image('arrow', arrow);
+    this.load.image(Textures.boxSmall, boxSmall);
+    this.load.image(Textures.boxLarge, boxLarge);
+    this.load.image(Textures.ground, ground);
+    this.load.image(Textures.player, player);
+    this.load.image(Textures.cloudGroup, cloudGroup);
+    this.load.image(Textures.bow, bow);
+    this.load.image(Textures.defaultArrow, arrow);
+    this.load.image(Textures.goldSpear, spear);
+    this.load.image(Textures.pointer, pointer);
   }
 
   create() {
@@ -51,9 +57,9 @@ export default class Pilot extends BaseScene {
     // Player
     // ################################################################
     this.player = new Player(
-      this, 
-      700, 
-      mapHeight - groundHeight - 900, 
+      this,
+      700,
+      mapHeight - groundHeight - 900,
       "player",
       this.projectileManager
     );
@@ -62,15 +68,15 @@ export default class Pilot extends BaseScene {
     // Player and projectile collisions
     // ################################################################
     this.physics.add.collider(
-      this.player, 
-      this.projectileManager.getProjectilesGroup(), 
+      this.player,
+      this.projectileManager.getProjectilesGroup(),
       (player, projectile) => {
-        if (player instanceof Player && projectile instanceof Projectile) {
+        if (player instanceof Player && projectile instanceof BaseProjectile) {
           projectile.handleCollision(player);
         }
       },
     )
-    
+
     // ################################################################
     // Camera
     // ################################################################
@@ -96,21 +102,8 @@ export default class Pilot extends BaseScene {
       new Platform(this, 9 * 1000, mapHeight - groundHeight, 'ground', { solid: true }),
     ].forEach(object => this.groundTiles.add(object));
 
-    this.physics.add.collider(this.player, this.groundTiles, (_player) => {
-      /**
-      const player = _player as Player;
+    this.physics.add.collider(this.player, this.groundTiles);
 
-      // Use Phaser's built-in speed property
-      const impactSpeed = player.getBody().speed;
-  
-      if (impactSpeed > player.getBaseMaxVelocity()) {
-        console.log(`Impact speed: ${impactSpeed}`);
-  
-        player.takeDamage(20);
-      }
-      */
-    });
-    
     // ################################################################
     // Create Ground boxes
     // ################################################################

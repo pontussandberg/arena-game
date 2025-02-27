@@ -1,3 +1,4 @@
+import { Textures } from "../../scenes/Pilot/Pilot.constants";
 import { Player } from "../Player";
 
 interface MouseFollowerOptions {
@@ -27,21 +28,25 @@ export default class MouseFollower extends Phaser.Physics.Arcade.Sprite {
   private maxRadiusX!: number;
   private maxRadiusY!: number;
 
-  constructor(scene: Phaser.Scene, player: Player, texture: string, options: MouseFollowerOptions) {
-    super(scene, player.x, player.y, texture);
+  constructor(scene: Phaser.Scene, player: Player, texture?: string, options?: MouseFollowerOptions) {
+    super(scene, player.x, player.y, texture ?? Textures.pointer);
     scene.add.existing(this);
     scene.physics.add.existing(this);
-    this.depth = options.depth ?? 0;
+    this.depth = options?.depth ?? 0;
 
     /**
      * Compute max radius for x and y
      */
     const { width: playerWidth, height: playerHeight } = player.getBody();
-    this.maxRadiusX = (options.radiusGap?.x ?? 0) + (playerWidth / 2);
-    this.maxRadiusY = (options.radiusGap?.y ?? 0) + (playerHeight / 2);
+    this.maxRadiusX = (options?.radiusGap?.x ?? 0) + (playerWidth / 2);
+    this.maxRadiusY = (options?.radiusGap?.y ?? 0) + (playerHeight / 2);
 
     // Store player
     this.player = player;
+  }
+
+  updateTexture(key: Textures | null) {
+    this.setTexture(key ?? Textures.pointer);
   }
 
   private getBody() {

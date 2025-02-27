@@ -15,16 +15,27 @@ export interface OrganismOptions {
     x: number;
     y: number;
   };
+  /**
+   * Velocity
+   */
+  maxVelocity: number;
+  /**
+   * Acceleration when moving
+   */
+  acceleration: number;
 }
 
 export class Organism extends Phaser.Physics.Arcade.Sprite {
   private health: number;
   private maxHealth: number;
   private healthBar: HealthBar;
+  private acceleration: number;
+  private maxVelocity: number;
+  private lastDirection: "left" | "right" = "right";
   private onDie?: OrganismOptions["onDie"];
 
   constructor(
-    scene: Phaser.Scene, 
+    scene: Phaser.Scene,
     x: number,
     y: number,
     texture: string,
@@ -33,6 +44,8 @@ export class Organism extends Phaser.Physics.Arcade.Sprite {
       maxHealth,
       gravity,
       drag,
+      maxVelocity,
+      acceleration,
     }: OrganismOptions,
   ) {
     super(scene, x, y, texture);
@@ -41,6 +54,8 @@ export class Organism extends Phaser.Physics.Arcade.Sprite {
     this.onDie = onDie;
     this.health = maxHealth;
     this.maxHealth = maxHealth;
+    this.acceleration = acceleration;
+    this.maxVelocity = acceleration;
 
     // ################################################################
     // Physics
@@ -49,6 +64,7 @@ export class Organism extends Phaser.Physics.Arcade.Sprite {
     this.setDrag(drag.x, drag.y);
     this.setGravity(0, gravity);
     this.setCollideWorldBounds(true);
+    this.setMaxVelocity(maxVelocity);
 
     // ################################################################
     // HP Bar
@@ -56,36 +72,41 @@ export class Organism extends Phaser.Physics.Arcade.Sprite {
     this.healthBar = new HealthBar(scene, this, maxHealth, maxHealth);
   }
 
-  takeDamage(amount: number): void {
+  /**
+   * Set acceleration in a direction
+   */
+  public moveHorizontal(dir: "left" | "right"): void {
+    if (dir === "left") {
+      this.setFlipX(true);
+      this.setAccelerationX(-this.acceleration);
+      this.lastDirection = "left";
+    } else if (dir === "right") {
+      this.setFlipX(false);
+      this.setAccelerationX(this.acceleration);
+      this.lastDirection = "right";
+    }
+  };
+
+  /**
+   * Stop acceleration, let drag slow it down
+   */
+  public stopMovingHorizontal() {
+    this.setAccelerationX(0);
+  }
+
+  /**
+   * Reduce health by amount, will run die() if result is below 0
+   */
+  public takeDamage(amount: number): void {
     const result = this.health - amount;
     this.healthBar.updateHealth(result);
     this.health = result;
-    
+
     console.log(`${this.texture.key} took ${amount} damage, remaining health: ${this.health}`);
 
     if (this.health <= 0) {
       this.die();
     }
-  }
-
-  setHealth(hp: number) {
-    this.health = hp;
-  }
-
-  getHealth(): number {
-    return this.health;
-  }
-
-  getMaxHealth(): number {
-    return this.maxHealth;
-  }
-
-  setMaxHealth(newMax: number) {
-    this.healthBar.updateMaxHealth(newMax);
-    if (newMax < this.health) {
-      return this.die();    
-    }
-    this.maxHealth = newMax;
   }
 
   private die(): void {
@@ -94,6 +115,40 @@ export class Organism extends Phaser.Physics.Arcade.Sprite {
     } else {
       this.destroy();
     }
+  }
+
+  // ################################################################
+  // Setters
+  // ################################################################
+  public setHealth(hp: number) {
+    this.health = hp;
+  }
+
+  public setMaxHealth(newMax: number) {
+    this.healthBar.updateMaxHealth(newMax);
+    if (newMax < this.health) {
+      return this.die();
+    }
+    this.maxHealth = newMax;
+  }
+
+  // ################################################################
+  // Getters
+  // ################################################################
+  public getMaxVelocity(): number {
+    return this.maxVelocity;
+  }
+
+  public getLastDirection(): "left" | "right" {
+    return this.lastDirection;
+  }
+
+  public getHealth(): number {
+    return this.health;
+  }
+
+  public getMaxHealth(): number {
+    return this.maxHealth;
   }
 
   /**

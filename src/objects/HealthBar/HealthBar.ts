@@ -17,11 +17,12 @@ export class HealthBar extends Phaser.GameObjects.Container {
 
   constructor(scene: Phaser.Scene, organism: Organism, hp: number, maxHp: number) {
     super(scene, organism.x, organism.y);
+    scene.add.existing(this);
     this.organism = organism;
+    this.depth = 10000;
     this.hp = hp;
     this.maxHp = maxHp;
 
-    scene.add.existing(this);
 
     // Health Bar Background
     this.healthBarBg = scene.add.rectangle(0, 0, HP_BAR_WIDTH, HP_BAR_HEIGHT, 0x555555);

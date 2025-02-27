@@ -8,16 +8,7 @@ export interface PlayerConfig {
   /**
    * Velocity
    */
-  maxVelocity: number;
   jumpVelocity: number;
-  /**
-   * Can overcap velocity cap
-   */
-  dashVelocity: number;
-  /**
-   * Player acceleration
-   */
-  acceleration: number;
   /**
    * Snaps player to set value if moving faster than
    * set value when changing directions horizontally
@@ -33,15 +24,18 @@ export interface PlayerConfig {
    */
   multiJumpCharges?: number;
   /**
+   * Can overcap velocity cap
+   */
+  dashVelocity: number;
+  /**
    * Count of air dashes can do in the air before landing
    * Undefined for no limit
    */
   dashCharges?: number;
   /**
-   * Disable the mechanic that limits dashing before 
-   * overcapped velocity has been reset
+   * Fixed delay between each dash
    */
-  noDashDelay?: boolean;
+  dashDelayMs?: number;
   /**
    * At what rate the player with overcapped max velocity returns to normal max velocity
    * Velocity decrease per frame
