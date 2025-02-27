@@ -103,8 +103,6 @@ export class Organism extends Phaser.Physics.Arcade.Sprite {
     this.healthBar.updateHealth(result);
     this.health = result;
 
-    console.log(`${this.texture.key} took ${amount} damage, remaining health: ${this.health}`);
-
     if (this.health <= 0) {
       this.die();
     }

@@ -47,7 +47,6 @@ export default class MouseFollower extends Phaser.Physics.Arcade.Sprite {
   setMaxRadius(gapX: number, gapY: number) {
     this.maxRadiusX = gapX;
     this.maxRadiusY = gapY;
-    console.log(this.maxRadiusX, this.maxRadiusY)
   }
 
   updateTexture(key: Textures | null) {
