@@ -1,13 +1,16 @@
-import Phaser from "phaser";
-import { PLAYER_CONFIG  } from "./Player.constants";
+import Phaser, { Game } from "phaser";
+import { PLAYER_CONFIG, WeaponId, WEAPONS  } from "./Player.constants";
 import { MouseFollower } from "../MouseFollower";
-import { PlayerConfig } from "./Player.types";
+import { PlayerConfig, Weapon } from "./Player.types";
 import { Organism } from "../Organism";
 import { ProjectileManager } from "../ProjectileManager/ProjectileManager";
 import { BaseScene } from "../../scenes/BaseScene";
 import { ProjectileId } from "../ProjectileManager/ProjectileManager.constants";
 import { Textures } from "../../scenes/Pilot/Pilot.constants";
 import { BodyFollower } from "../BodyFollower/BodyFollower";
+import { CooldownBar } from "../CooldownBar";
+
+const SPEAR_FIXED_TOP_OFFSET = -40;
 
 interface Cursors {
   W: Phaser.Input.Keyboard.Key;
@@ -18,11 +21,7 @@ interface Cursors {
   SHIFT: Phaser.Input.Keyboard.Key;
   ONE: Phaser.Input.Keyboard.Key;
   TWO: Phaser.Input.Keyboard.Key;
-}
-
-enum EquipableWeapon {
-  bow = "bow",
-  spear = "spear",
+  THREE: Phaser.Input.Keyboard.Key;
 }
 
 export default class Player extends Organism {
@@ -37,6 +36,7 @@ export default class Player extends Organism {
   private projectileManager!: ProjectileManager;
   private lastAttackTime: number = 0;
   private lastDashTime: number = 0;
+  private cooldownBar: CooldownBar;
   /**
    * Whenever this is set to a greater value than provided in the config
    * the max movement velocity will decay from the value back to base value
@@ -48,15 +48,8 @@ export default class Player extends Organism {
    * drop-through mechanic to work.
    */
   public standingOnPassThroughPlatform: boolean = false;
-  private equippedWeapon: EquipableWeapon | null = null;
-  private spearSprite: Phaser.GameObjects.Image | null = null
-  /**
-   * Constants for all attack speeds
-   */
-  private attackSpeeds: Record<EquipableWeapon, number> = {
-    [EquipableWeapon.spear]: 500,
-    [EquipableWeapon.bow]: 100,
-  };
+  private equippedWeapon: Weapon | null = null;
+  private bodyFollower: BodyFollower;
 
   constructor(
     scene: BaseScene,
@@ -83,16 +76,22 @@ export default class Player extends Organism {
     this.projectileManager = projectileManager;
 
     // ################################################################
-    // Init Game Overlay
+    // Cooldown bar
     // ################################################################
-    /**
-    this.gameOverlay = new GameOverlay(
-      scene,
-      this,
-      this.getHealth(),
-      this.getMaxHealth()
-    );
-    */
+    this.cooldownBar = new CooldownBar(scene, this, -19);
+
+    // ################################################################
+    // Body follower (Togglable spear over head)
+    // ################################################################
+    const controlledFollowerItems = [
+      {
+        id: WeaponId.spear,
+        texture: Textures.goldSpear,
+        x: 0,
+        y: -12,
+      }
+    ];
+    this.bodyFollower = new BodyFollower(scene, this, config.depth, SPEAR_FIXED_TOP_OFFSET, controlledFollowerItems)
 
     // ################################################################
     // Init Mouse Follower
@@ -101,13 +100,7 @@ export default class Player extends Organism {
       scene,
       this,
       undefined,
-      {
-        depth: config.depth,
-        radiusGap: {
-          x: 40,
-          y: 20,
-        }
-      },
+      { depth: config.depth },
     );
 
     // Input
@@ -121,6 +114,7 @@ export default class Player extends Organism {
         SHIFT: scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SHIFT),
         ONE: scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.ONE),
         TWO: scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.TWO),
+        THREE: scene.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.THREE),
       };
     }
 
@@ -131,41 +125,25 @@ export default class Player extends Organism {
       }
     });
 
-    this.equipWeapon(EquipableWeapon.bow);
+    this.equipWeapon(null);
   }
 
   // ################################################################
   // Weapon mechanics
   // ################################################################
-  showSpear() {
-    if (!this.spearSprite) {
-      this.spearSprite = new BodyFollower(this.scene as BaseScene, Textures.goldSpear, this, 12);
-      this.spearSprite.setDepth(10); // Ensure it's rendered on top
-    }
-    this.spearSprite.setVisible(true);
-  }
-
-  hideSpear() {
-    if (this.spearSprite) {
-      this.spearSprite.setVisible(false);
-    }
-  }
-
   private canAttack(): boolean {
-    console.log(
-    this.scene.time.now - this.lastAttackTime
-    )
     const weapon = this.equippedWeapon;
     if (!weapon) return false;
-    return this.scene.time.now - this.lastAttackTime >= this.attackSpeeds[weapon];
+    return this.scene.time.now - this.lastAttackTime >= (this.equippedWeapon?.attackSpeed || 0);
   }
 
   private attack() {
     if (this.canAttack()) {
+      this.cooldownBar.startCooldown(this.equippedWeapon?.attackSpeed ?? 0);
       this.lastAttackTime = this.scene.time.now;
-      if (this.equippedWeapon === EquipableWeapon.spear) {
+      if (this.equippedWeapon?.id === WeaponId.spear) {
         this.throwSpear();
-      } else if (this.equippedWeapon === EquipableWeapon.bow) {
+      } else if (this.equippedWeapon?.id === WeaponId.bow) {
         this.fireArrow();
       }
     }
@@ -173,10 +151,11 @@ export default class Player extends Organism {
   
   private throwSpear() {
     const { velX, velY } = this.getVelocityTowardsMouse(1000);
+    this.bodyFollower.hideControlledItemOverDuration(WeaponId.spear, WEAPONS[WeaponId.spear].attackSpeed)
   
     // Calculate correct spawn position
     const spawnX = this.getBody().x;
-    const spawnY = this.getBody().y - this.getBody().height / 1.5;
+    const spawnY = this.getBody().y + SPEAR_FIXED_TOP_OFFSET;
     
     // Fire projectile from adjusted position
     this.projectileManager.fireProjectile(
@@ -214,20 +193,29 @@ export default class Player extends Organism {
     );
   }
 
-  equipWeapon(weapon: EquipableWeapon | null) {
+  equipWeapon(weapon: Weapon | null) {
+    this.bodyFollower.setControlledItemVisibility(WeaponId.spear ?? "", weapon?.id === WeaponId.spear);
+
+    /**
+     * No weapon equipped
+     */
     if (!weapon) {
       this.mouseFollower.updateTexture(null);
+      this.mouseFollower.setMaxRadius(65, 85);
       this.equippedWeapon = null;
-      this.hideSpear();
-    } else if (weapon === EquipableWeapon.bow) {
-      this.mouseFollower.updateTexture(Textures.bow);
-      this.equippedWeapon = EquipableWeapon.bow;
-      this.hideSpear();
-    } else if (weapon === EquipableWeapon.spear) {
-      this.mouseFollower.updateTexture(null);
-      this.equippedWeapon = EquipableWeapon.spear;
-      this.showSpear();
+      return;
     }
+
+    /**
+     * Has weapon equipped
+     */
+    if (weapon.id === WeaponId.bow) {
+      this.equippedWeapon = WEAPONS.bow;
+    } else if (weapon.id === WeaponId.spear) {
+      this.equippedWeapon = WEAPONS.spear;
+    }
+    this.mouseFollower.updateTexture(weapon.mouseFollowerTexture);
+    this.mouseFollower.setMaxRadius(weapon.mouseFollower.radius.x, weapon.mouseFollower.radius.y);
   }
 
   /**
@@ -342,6 +330,14 @@ export default class Player extends Organism {
   public update() {
     this.mouseFollower.update();
 
+    /**
+     * Rotate the fixed bodyfollower item towards mouse pos (spear above head)
+     */
+    this.bodyFollower.setControlledItemRotation(
+      WeaponId.spear,
+      this.mouseFollower.mouseAngle
+    );
+
     if (!this.cursors) {
       return;
     }
@@ -401,10 +397,11 @@ export default class Player extends Organism {
     }
     
     if (Phaser.Input.Keyboard.JustDown(this.cursors.ONE)) {
-      this.equipWeapon(EquipableWeapon.bow);
-    }
-    if (Phaser.Input.Keyboard.JustDown(this.cursors.TWO)) {
-      this.equipWeapon(EquipableWeapon.spear);
+      this.equipWeapon(null);
+    } else if (Phaser.Input.Keyboard.JustDown(this.cursors.TWO)) {
+      this.equipWeapon(WEAPONS.spear);
+    } else if (Phaser.Input.Keyboard.JustDown(this.cursors.THREE)) {
+      this.equipWeapon(WEAPONS.bow);
     }
 
     // ################################################################

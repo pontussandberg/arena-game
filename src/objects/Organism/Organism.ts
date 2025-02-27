@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { HealthBar } from "../HealthBar";
+import { BaseScene } from "../../scenes/BaseScene";
 
 export interface OrganismOptions {
   maxHealth: number;
@@ -35,7 +36,7 @@ export class Organism extends Phaser.Physics.Arcade.Sprite {
   private onDie?: OrganismOptions["onDie"];
 
   constructor(
-    scene: Phaser.Scene,
+    scene: BaseScene,
     x: number,
     y: number,
     texture: string,
@@ -69,7 +70,7 @@ export class Organism extends Phaser.Physics.Arcade.Sprite {
     // ################################################################
     // HP Bar
     // ################################################################
-    this.healthBar = new HealthBar(scene, this, maxHealth, maxHealth);
+    this.healthBar = new HealthBar(scene, this, maxHealth, maxHealth, -14);
   }
 
   /**

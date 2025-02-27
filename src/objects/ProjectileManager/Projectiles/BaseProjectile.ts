@@ -56,7 +56,7 @@ export class BaseProjectile extends Phaser.Physics.Arcade.Sprite {
   }
 
   handleCollision(target: Phaser.GameObjects.GameObject) {
-    if (target instanceof Organism) {
+    if (target !== this.shooter && target instanceof Organism) {
       target.takeDamage(this.damage);
       this.destroy();
     }

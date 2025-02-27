@@ -75,6 +75,9 @@ export default class Pilot extends BaseScene {
           projectile.handleCollision(player);
         }
       },
+      (player, projectile) => {
+        return player !== this.player;
+      },
     )
 
     // ################################################################

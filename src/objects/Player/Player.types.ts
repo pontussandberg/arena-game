@@ -1,4 +1,6 @@
+import { Textures } from "../../scenes/Pilot/Pilot.constants";
 import { OrganismOptions } from "../Organism";
+import { WeaponId } from "./Player.constants";
 
 export interface PlayerConfig {
   /**
@@ -42,4 +44,17 @@ export interface PlayerConfig {
    */
   overcappedVelocityDecayRate: number;
   organismOptions: OrganismOptions;
+}
+
+export type WeaponMap = Record<WeaponId, Weapon>;
+export interface Weapon {
+  id: WeaponId;
+  attackSpeed: number;
+  mouseFollowerTexture: Textures;
+  mouseFollower: {
+    radius: {
+      x: number;
+      y: number;
+    };
+  };
 }
