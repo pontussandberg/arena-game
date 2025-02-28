@@ -2,16 +2,16 @@ import { Textures } from "../../scenes/Pilot/Pilot.constants";
 import { PlayerConfig, Weapon, WeaponMap } from "./Player.types";
 
 export const PLAYER_CONFIG: PlayerConfig = {
+  // multiJumpCharges: 3,
+  // noDashDelay: true,
   depth: 100,
   jumpVelocity: 350,
   strafeCancelSnapVelocity: 100,
   jumpBoostDurationMs: 200,
-  // multiJumpCharges: 3,
   dashDelayMs: 500,
   dashVelocity: 1000,
   dashCharges: 3,
   dashDecayVelocity: 5,
-  // noDashDelay: true,
   overcappedVelocityDecayRate: 10,
   organismOptions: {
     acceleration: 1000,
