@@ -35,6 +35,10 @@ export interface PlayerConfig {
    */
   dashCharges?: number;
   /**
+   * Dash decay rate in velocity per frame
+   */
+  dashDecayVelocity: number;
+  /**
    * Fixed delay between each dash
    */
   dashDelayMs?: number;

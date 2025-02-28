@@ -4,12 +4,13 @@ import { PlayerConfig, Weapon, WeaponMap } from "./Player.types";
 export const PLAYER_CONFIG: PlayerConfig = {
   depth: 100,
   jumpVelocity: 350,
-  dashVelocity: 900,
   strafeCancelSnapVelocity: 100,
   jumpBoostDurationMs: 200,
-  dashDelayMs: 500,
   // multiJumpCharges: 3,
-   dashCharges: 3,
+  dashDelayMs: 500,
+  dashVelocity: 1000,
+  dashCharges: 3,
+  dashDecayVelocity: 5,
   // noDashDelay: true,
   overcappedVelocityDecayRate: 10,
   organismOptions: {

@@ -2,6 +2,8 @@ import Phaser from "phaser";
 import { HealthBar } from "../HealthBar";
 import { BaseScene } from "../../scenes/BaseScene";
 
+const MAX_VEL_DECAY_EVENT_DELAY = 16;
+
 export interface OrganismOptions {
   maxHealth: number;
   onDie?: () => void;
@@ -27,11 +29,14 @@ export interface OrganismOptions {
 }
 
 export class Organism extends Phaser.Physics.Arcade.Sprite {
+  private acceleration: number;
+  
+  private readonly baseMaxVelocity: number;
+
   private health: number;
   private maxHealth: number;
   private healthBar: HealthBar;
-  private acceleration: number;
-  private maxVelocity: number;
+
   private lastDirection: "left" | "right" = "right";
   private onDie?: OrganismOptions["onDie"];
 
@@ -56,7 +61,7 @@ export class Organism extends Phaser.Physics.Arcade.Sprite {
     this.health = maxHealth;
     this.maxHealth = maxHealth;
     this.acceleration = acceleration;
-    this.maxVelocity = acceleration;
+    this.baseMaxVelocity = maxVelocity;
 
     // ################################################################
     // Physics
@@ -116,6 +121,68 @@ export class Organism extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
+  update() {
+    console.log(this.getBody().maxVelocity.x);
+    console.log(this.getBody().velocity.x);
+    console.log("------------");
+  }
+
+  /**
+   * Set velocity in a direction
+   * Only has an effect when the greater velocity 
+   * of input overcaps the max velocity.
+   *  1. Max velocity is set to the greater one of input
+   *  2. Velocity is set according to input
+   *  3  Max velocity decays in velocity units per frame until its back to base velocity
+   * 
+   * @returns The duration of the dash in miliseconds
+   */
+  public dash(
+    xVel: number, 
+    yVel: number, 
+    // Velocity decay per frame
+    decay: number,
+  ): number {
+    const dashMaxVel = Math.max(Math.abs(xVel), Math.abs(yVel));
+    if (dashMaxVel <= this.getMaxVelocity()) {
+      return 0;
+    }
+    this.setMaxVelocity(dashMaxVel);
+    this.setVelocity(xVel, yVel);
+    this.decayMaxVelocityToBase(decay);
+    return this.calculateDashDuration(dashMaxVel, decay);
+  }
+
+  private calculateDashDuration(newMaxVelocity: number, decayRate: number): number {
+    if (newMaxVelocity <= this.baseMaxVelocity || decayRate <= 0) {
+      return 0; // No decay needed or invalid input
+    }
+  
+    const totalDecay = newMaxVelocity - this.baseMaxVelocity;
+    const framesNeeded = totalDecay / decayRate; 
+    const duration = framesNeeded * MAX_VEL_DECAY_EVENT_DELAY;
+  
+    return Math.ceil(duration);
+  }  
+
+  private decayMaxVelocityToBase(decay: number) {
+    const decayEvent = this.scene.time.addEvent({
+      delay: MAX_VEL_DECAY_EVENT_DELAY, // ~1 frame at 60 FPS
+      loop: true,
+      callback: () => {
+        // Ensure to not decay below baseMaxVelocity
+        const decayedVelocity = Math.max(this.baseMaxVelocity, this.getMaxVelocity() - decay)
+        this.setMaxVelocity(decayedVelocity);
+
+        // Destroy event when reaching base velocity
+        if (decayedVelocity === this.baseMaxVelocity) {
+          decayEvent.remove();
+        }
+      },
+    });
+  }
+  
+
   // ################################################################
   // Setters
   // ################################################################
@@ -135,7 +202,8 @@ export class Organism extends Phaser.Physics.Arcade.Sprite {
   // Getters
   // ################################################################
   public getMaxVelocity(): number {
-    return this.maxVelocity;
+    const { x, y } = this.getBody().maxVelocity;
+    return Math.max(x, y);
   }
 
   public getLastDirection(): "left" | "right" {

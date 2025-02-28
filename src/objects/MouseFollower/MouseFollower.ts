@@ -50,7 +50,12 @@ export default class MouseFollower extends Phaser.Physics.Arcade.Sprite {
   }
 
   updateTexture(key: Textures | null) {
-    this.setTexture(key ?? Textures.pointer);
+    if (key === null) {
+      this.setVisible(false);
+    } else {
+      this.setVisible(true);
+      this.setTexture(key);
+    }
   }
 
   private getBody() {
@@ -68,14 +73,14 @@ export default class MouseFollower extends Phaser.Physics.Arcade.Sprite {
   }
 
   // Render the object visually and physically
-  private show() {
+  public show() {
     this.setVisible(true);
     this.setAlpha(1);
     this.getBody().setEnable(true);
   }
 
   // Dont render the object visually and physically
-  private hide() {
+  public hide() {
     this.setVisible(false);
     this.setAlpha(0);
     this.getBody().setEnable(false);

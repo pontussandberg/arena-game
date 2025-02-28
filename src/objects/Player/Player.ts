@@ -11,6 +11,7 @@ import { BodyFollower } from "../BodyFollower/BodyFollower";
 import { CooldownBar } from "../CooldownBar";
 
 const SPEAR_FIXED_TOP_OFFSET = -40;
+const DASH_ROTATION_DURATION = 500;
 
 interface Cursors {
   W: Phaser.Input.Keyboard.Key;
@@ -36,12 +37,6 @@ export default class Player extends Organism {
   private projectileManager!: ProjectileManager;
   private lastDashTime: number = 0;
   private cooldownBar: CooldownBar;
-  /**
-   * Whenever this is set to a greater value than provided in the config
-   * the max movement velocity will decay from the value back to base value
-   * over a configurable rate.
-   */
-  private overcappedMaxVelocity!: number;
   /**
    * Must be set to true from the scene it's rendered from in order for the
    * drop-through mechanic to work.
@@ -71,7 +66,6 @@ export default class Player extends Organism {
     this.scene = scene;
     this.config = config;
     this.depth = config.depth;
-    this.overcappedMaxVelocity = config.overcappedVelocityDecayRate;
     this.projectileManager = projectileManager;
 
     // ################################################################
@@ -125,204 +119,6 @@ export default class Player extends Organism {
     });
 
     this.equipWeapon(null);
-  }
-
-  // ################################################################
-  // Weapon mechanics
-  // ################################################################
-  private canAttack(): boolean {
-    return this.cooldownBar.remainingCooldown === 0;
-  }
-
-  private attack() {
-    if (this.canAttack()) {
-      this.cooldownBar.startCooldown(this.equippedWeapon?.attackSpeed ?? 0);
-
-      if (this.equippedWeapon?.id === WeaponId.spear) {
-        this.throwSpear();
-      } else if (this.equippedWeapon?.id === WeaponId.bow) {
-        this.fireArrow();
-      }
-    }
-  }
-  
-  private throwSpear() {
-    const { velX, velY } = this.getVelocityTowardsMouse(1000);
-    this.bodyFollower.hideControlledItemOverDuration(WeaponId.spear, WEAPONS[WeaponId.spear].attackSpeed)
-  
-    // Calculate correct spawn position
-    const spawnX = this.getBody().x;
-    const spawnY = this.getBody().y + SPEAR_FIXED_TOP_OFFSET;
-    
-    // Fire projectile from adjusted position
-    this.projectileManager.fireProjectile(
-      this,
-      velX,
-      velY,
-      spawnX,
-      spawnY,
-      ProjectileId.goldSpear,
-    );
-  }
-
-  private fireArrow() {
-    const { velX, velY } = this.getVelocityTowardsMouse(1000);
-    
-    // Bow dimensions
-    const bowWidth = this.mouseFollower.width; // Assuming it's set correctly
-    const spawnOffset = bowWidth / 2; // Move the arrow outward
-  
-    // Bow's rotation in radians
-    const angle = this.mouseFollower.rotation;
-  
-    // Calculate correct spawn position
-    const spawnX = this.mouseFollower.x + Math.cos(angle) * spawnOffset;
-    const spawnY = this.mouseFollower.y + Math.sin(angle) * spawnOffset;
-  
-    // Fire projectile from adjusted position
-    this.projectileManager.fireProjectile(
-      this,
-      velX,
-      velY,
-      spawnX,
-      spawnY,
-      ProjectileId.arrow,
-    );
-  }
-
-  equipWeapon(weapon: Weapon | null) {
-    this.bodyFollower.setControlledItemVisibility(WeaponId.spear ?? "", weapon?.id === WeaponId.spear);
-    this.cooldownBar.startCooldown(weapon?.attackSpeed ?? 0, true);
-    
-    /**
-     * No weapon equipped
-     */
-    if (!weapon) {
-      this.mouseFollower.updateTexture(null);
-      this.mouseFollower.setMaxRadius(65, 85);
-      this.equippedWeapon = null;
-      return;
-    }
-
-    /**
-     * Has weapon equipped
-     */
-    if (weapon.id === WeaponId.bow) {
-      this.equippedWeapon = WEAPONS.bow;
-    } else if (weapon.id === WeaponId.spear) {
-      this.equippedWeapon = WEAPONS.spear;
-    }
-    this.mouseFollower.updateTexture(weapon.mouseFollowerTexture);
-    this.mouseFollower.setMaxRadius(weapon.mouseFollower.radius.x, weapon.mouseFollower.radius.y);
-  }
-
-  /**
-   * Get typed body
-   */
-  public getBody() {
-    return this.body as Phaser.Physics.Arcade.Body;
-  }
-
-  /**
-   * Apply a velocity towards mouseFollower.mouseAngle
-   */
-  private applyVelocityTowardsMouse(velocity: number) {
-    const { velX, velY } = this.getVelocityTowardsMouse(velocity);
-    this.overcappedMaxVelocity = this.config.dashVelocity;
-    this.setFlipX(velX < 0);
-    this.setVelocity(velX, velY);
-  }
-
-  /**
-   * Get a velocity in the direction of the mouse mouseFollower.mouseAngle
-   */
-  private getVelocityTowardsMouse(velocity: number) {
-    const angle = this.mouseFollower.mouseAngle;
-    const velX = Math.cos(angle) * velocity;
-    const velY = Math.sin(angle) * velocity;
-    return {
-      velX,
-      velY,
-    };
-  }
-
-  /**
-   * Check if velocity is overcapped with overcappedMaxVelocity
-   */
-  private hasOvercappedMaxVelocity(): boolean {
-    return this.overcappedMaxVelocity !== this.getMaxVelocity();
-  }
-
-  // ################################################################
-  // Overcapped max velocity
-  // - Gradually decresing overcappedMaxVelocity back to the base max velocity
-  // ################################################################
-  private decayOvercappedVelocity(): void {
-    if (this.overcappedMaxVelocity > this.getMaxVelocity()) {
-      if (this.overcappedMaxVelocity > this.getMaxVelocity()) {
-        // Decay towards normal max velocity when above it
-        this.overcappedMaxVelocity = Math.max(
-          this.overcappedMaxVelocity - this.config.overcappedVelocityDecayRate,
-          this.getMaxVelocity()
-        );
-      } else {
-        // Ensure it locks at the correct speed when within range
-        this.overcappedMaxVelocity = this.getMaxVelocity();
-      }
-
-      // Update player velocity
-      this.setMaxVelocity(Math.abs(this.overcappedMaxVelocity));
-    } else {
-      this.setMaxVelocity(this.getMaxVelocity());
-      this.overcappedMaxVelocity = this.getMaxVelocity();
-    }
-  }
-
-  private performJump() {
-    this.setVelocityY(-this.config.jumpVelocity);
-  }
-
-  private resetRotation() {
-    this.scene.tweens.add({
-      targets: this,
-      rotation: 0,  // Reset back to default upright position
-      duration: 500,  // Time in ms for smooth transition
-      ease: "Quad.easeOut",  // Smooth easing effect
-    });
-  }
-
-  private canDash(): boolean {
-    return (
-      (!this.config.dashDelayMs || this.scene.time.now - (this.lastDashTime || 0) >= this.config.dashDelayMs)
-      && (!this.config.dashCharges || this.config.dashCharges > this.airDashCount)
-    );
-  }
-  
-  private performDash() {
-    if (!this.canDash()) {
-      return;
-    }
-    
-    this.lastDashTime = this.scene.time.now;
-    this.airDashCount++;
-    this.applyVelocityTowardsMouse(this.config.dashVelocity);
-    this.mouseFollower.hideOverDuration(700);
-
-    // ################################################################
-    // Rotate towards dash
-    // ################################################################
-    // Cancel any existing rotation tweens before applying a new dash rotation
-    this.scene.tweens.killTweensOf(this);
-    this.setRotation(this.mouseFollower.mouseAngle + Math.PI / 2);
-    this.scene.time.addEvent({
-      delay: 300, // Wait before starting reset
-      callback: () => this.resetRotation(),
-      callbackScope: this,
-    });
-  }
-
-  private canJumpBoost(): boolean {
-    return this.jumpHoldTimeMs < this.config.jumpBoostDurationMs
   }
 
   public update() {
@@ -461,8 +257,168 @@ export default class Player extends Organism {
         this.performJump();
       }
     }
+  }
 
-    // Decay overcapped velocity back to normal cap
-    this.decayOvercappedVelocity();
+  // ################################################################
+  // Weapon mechanics
+  // ################################################################
+  private canAttack(): boolean {
+    return this.cooldownBar.remainingCooldown === 0;
+  }
+
+  private attack(): void {
+    if (this.canAttack()) {
+      this.cooldownBar.startCooldown(this.equippedWeapon?.attackSpeed ?? 0);
+
+      if (this.equippedWeapon?.id === WeaponId.spear) {
+        this.throwSpear();
+      } else if (this.equippedWeapon?.id === WeaponId.bow) {
+        this.fireArrow();
+      }
+    }
+  }
+  
+  private throwSpear(): void {
+    const { velX, velY } = this.getVelocityTowardsMouse(1000);
+    this.bodyFollower.hideControlledItemOverDuration(WeaponId.spear, WEAPONS[WeaponId.spear].attackSpeed)
+  
+    // Calculate correct spawn position
+    const spawnX = this.getBody().x;
+    const spawnY = this.getBody().y + SPEAR_FIXED_TOP_OFFSET;
+    
+    // Fire projectile from adjusted position
+    this.projectileManager.fireProjectile(
+      this,
+      velX,
+      velY,
+      spawnX,
+      spawnY,
+      ProjectileId.goldSpear,
+    );
+  }
+
+  private fireArrow(): void {
+    const { velX, velY } = this.getVelocityTowardsMouse(1000);
+    
+    // Bow dimensions
+    const bowWidth = this.mouseFollower.width; // Assuming it's set correctly
+    const spawnOffset = bowWidth / 2; // Move the arrow outward
+  
+    // Bow's rotation in radians
+    const angle = this.mouseFollower.rotation;
+  
+    // Calculate correct spawn position
+    const spawnX = this.mouseFollower.x + Math.cos(angle) * spawnOffset;
+    const spawnY = this.mouseFollower.y + Math.sin(angle) * spawnOffset;
+  
+    // Fire projectile from adjusted position
+    this.projectileManager.fireProjectile(
+      this,
+      velX,
+      velY,
+      spawnX,
+      spawnY,
+      ProjectileId.arrow,
+    );
+  }
+
+  equipWeapon(weapon: Weapon | null): void {
+  this.cooldownBar.startCooldown(weapon?.attackSpeed ?? 0, true);
+    
+    /**
+     * No weapon equipped
+     */
+    if (!weapon) {
+      this.bodyFollower.setControlledItemVisibility(WeaponId.spear, false)
+      this.mouseFollower.setMaxRadius(65, 85);
+      this.mouseFollower.updateTexture(Textures.pointer);
+      this.equippedWeapon = null;
+    } else if (weapon.id === WeaponId.bow) {
+      this.bodyFollower.setControlledItemVisibility(WeaponId.spear, false)
+      this.mouseFollower.setMaxRadius(weapon.mouseFollower.radius.x, weapon.mouseFollower.radius.y);
+      this.mouseFollower.updateTexture(Textures.bow);
+      this.equippedWeapon = WEAPONS.bow;
+    } else if (weapon.id === WeaponId.spear) {
+      this.bodyFollower.setControlledItemVisibility(WeaponId.spear, true)
+      this.mouseFollower.updateTexture(null);
+      this.equippedWeapon = WEAPONS.spear;
+    }
+  }
+
+  /**
+   * Get typed body
+   */
+  public getBody(): Phaser.Physics.Arcade.Body {
+    return this.body as Phaser.Physics.Arcade.Body;
+  }
+
+  /**
+   * Get a velocity in the direction of the mouse mouseFollower.mouseAngle
+   */
+  private getVelocityTowardsMouse(velocity: number): {
+    velX: number;
+    velY: number;
+  } {
+    const angle = this.mouseFollower.mouseAngle;
+    const velX = Math.cos(angle) * velocity;
+    const velY = Math.sin(angle) * velocity;
+    return {
+      velX,
+      velY,
+    };
+  }
+
+  private performJump(): void {
+    this.setVelocityY(-this.config.jumpVelocity);
+  }
+
+  private resetRotation(duration: number): void {
+    this.scene.tweens.add({
+      targets: this,
+      rotation: 0,  // Reset back to default upright position
+      duration: duration,  // Time in ms for smooth transition
+      ease: "Quad.easeOut",  // Smooth easing effect
+    });
+  }
+
+  private canDash(): boolean {
+    return (
+      (!this.config.dashDelayMs || this.scene.time.now - (this.lastDashTime || 0) >= this.config.dashDelayMs)
+      && (!this.config.dashCharges || this.config.dashCharges > this.airDashCount)
+    );
+  }
+  
+  private performDash(): void {
+    if (!this.canDash()) {
+      return;
+    }
+    // ################################################################
+    // Limiter counters
+    // ################################################################
+    this.lastDashTime = this.scene.time.now;
+    this.airDashCount++;
+
+    // ################################################################
+    // Dash velocity handled on Organism
+    // ################################################################
+    const { velX, velY } = this.getVelocityTowardsMouse(this.config.dashVelocity);
+    const dashDuration = this.dash(velX, velY, this.config.dashDecayVelocity) / 2;
+    const rotateDelay = dashDuration * 0.3;
+    const rotateDuration = dashDuration * 0.7;
+
+    // ################################################################
+    // Rotate towards dash
+    // ################################################################
+    this.scene.tweens.killTweensOf(this);
+    this.setRotation(this.mouseFollower.mouseAngle + Math.PI / 2);
+    this.scene.time.addEvent({
+      delay: rotateDelay, // Wait before starting reset
+      callback: () => this.resetRotation(rotateDuration),
+      callbackScope: this,
+    });
+  }
+
+  private canJumpBoost(): boolean {
+    return this.jumpHoldTimeMs < this.config.jumpBoostDurationMs
   }
 }
