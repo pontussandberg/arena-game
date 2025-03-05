@@ -2,7 +2,7 @@ export const SCENE_CONFIG = {
   mapWidth: 10000,
   mapHeight: 2500,
   groundHeight: 250,
-  backgroundColorHex: "6C7553",
+  backgroundColorHex: "C8B580",
 };
 
 export enum Textures {

@@ -44,11 +44,23 @@ export default class MouseFollower extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this);
     scene.physics.add.existing(this);
 
-    // Use POST_UPDATE for movement updates instead of velocity
-    scene.events.on(Phaser.Scenes.Events.POST_UPDATE, this.updatePosition, this);
+    /**
+     * Update position when camera follow updates and after any render
+     */
+    scene.events.on(
+      Phaser.Scenes.Events.POST_UPDATE, 
+      () => this.updatePosition(), 
+      this.scene
+    );
+    scene.cameras.main.on(
+      Phaser.Cameras.Scene2D.Events.FOLLOW_UPDATE, 
+      this.updatePosition, 
+      this
+    );
   }
 
   private updatePosition() {
+    
     const mouseCords = this.getMouseWorldCordinates();
   
     // Adjust for the player's center position considering the origin is at the bottom
@@ -58,31 +70,15 @@ export default class MouseFollower extends Phaser.Physics.Arcade.Sprite {
     let dx = mouseCords.x - playerCenterX;
     let dy = mouseCords.y - playerCenterY;
   
-    const distance = Math.sqrt(dx * dx + dy * dy);
-  
-    // Apply radius constraints if provided
-    if (this.maxRadiusX > 0 && this.maxRadiusY > 0) {
-      // Calculate the angle to the mouse
-      const angle = Math.atan2(dy, dx);
-  
-      // Clamp the follower's distance to the maximum radius
-      const clampedX = Math.cos(angle) * Math.min(this.maxRadiusX, Math.abs(dx));
-      const clampedY = Math.sin(angle) * Math.min(this.maxRadiusY, Math.abs(dy));
-  
-      // Apply the position update while staying within the radius limits
-      this.x = Phaser.Math.Linear(this.x, playerCenterX + clampedX, this.followSpeed);
-      this.y = Phaser.Math.Linear(this.y, playerCenterY + clampedY, this.followSpeed);
-    } else {
-      // If no radius is set, move directly towards the mouse position
-      this.x = Phaser.Math.Linear(this.x, mouseCords.x, this.followSpeed);
-      this.y = Phaser.Math.Linear(this.y, mouseCords.y, this.followSpeed);
-    }
-  
+
+    // If no radius is set, move directly towards the mouse position
+    this.x = mouseCords.x;
+    this.y = mouseCords.y;
     // Smoothly rotate towards the mouse position
     const targetAngle = Math.atan2(dy, dx);
     this.rotation = Phaser.Math.Linear(this.rotation, targetAngle, this.followSpeed);
   }
-
+  
   private getBody() {
     return this.body as Phaser.Physics.Arcade.Body;
   }
@@ -105,11 +101,7 @@ export default class MouseFollower extends Phaser.Physics.Arcade.Sprite {
   }
 
   public getMouseWorldCordinates() {
-    const { x: cursorX, y: cursorY } = this.scene.input.activePointer;
-    const { scrollX, scrollY } = this.scene.cameras.main;
-    return {
-      x: scrollX + cursorX,
-      y: scrollY + cursorY,
-    };
+    const pointer = this.scene.input.activePointer;
+    return this.scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
   }
 }

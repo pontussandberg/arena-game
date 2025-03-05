@@ -1,3 +1,4 @@
+
 import Phaser from "phaser";
 import { Pilot } from "./scenes";
 
@@ -22,5 +23,3 @@ const config = {
 };
 
 new Phaser.Game(config);
-
-

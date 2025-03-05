@@ -8,11 +8,10 @@ import { BaseScene } from "../../scenes/BaseScene";
 import { ProjectileId } from "../ProjectileManager/ProjectileManager.constants";
 import { Textures } from "../../scenes/Pilot/Pilot.constants";
 import { CooldownBar } from "../CooldownBar";
-const DASH_ROTATION_DURATION = 500;
-const CHARACTER_WIDTH = 35;
-const CHARACTER_HEIGHT = 88;
-// Extra space from top of physics boundry
-const COOLDOWN_BAR_OFFSET_TOP = 28;
+import { ASSET_SCALE } from "../../constants";
+
+const CHARACTER_WIDTH = 35 * ASSET_SCALE;
+const CHARACTER_HEIGHT = 88 * ASSET_SCALE;
 
 interface Cursors {
   W: Phaser.Input.Keyboard.Key;
@@ -78,7 +77,7 @@ export default class Player extends Organism {
     // ################################################################
     // Cooldown bar
     // ################################################################
-    this.cooldownBar = new CooldownBar(scene, this, 0, 0 - this.getBody().height - COOLDOWN_BAR_OFFSET_TOP);
+    this.cooldownBar = new CooldownBar(scene, this);
 
     // ################################################################
     // Body follower (Togglable spear over head)

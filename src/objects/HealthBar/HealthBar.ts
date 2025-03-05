@@ -1,34 +1,23 @@
 import { BaseScene } from "../../scenes/BaseScene";
 import { Organism } from "../Organism";
 
-// constants
 const HEALTH_BAR = {
-  height: 6,
-  width: 60,
-  healthSegementHp: 0,
-  
+  height: 8,
+  width: 110,
+  /**
+   * Cooldownbar.height + Cooldownbar.offsetY will place
+   * Healthbar on top of Cooldownbar
+   */
+  offsetY: 10,
   color: {
-    background: {
-      value: 0x353535,
-      alpha: 1,
-    },
-    fill: {
-      value: 0xff5555,
-      alpha: 0.6,
-    },
-    slackingFill: {
-      value: 0xff5555,
-      alpha: 0.3,
-    },
-    segment: {
-      value: 0xcccccc,
-      alpha: 0.6,
-    }
-  }
+    background: { value: 0x353535, alpha: 0.5 },
+    fill: { value: 0xff5555, alpha: 0.6 },
+    slackingFill: { value: 0xff5555, alpha: 0.3 },
+    segment: { value: 0xcccccc, alpha: 0.6 },
+  },
 };
 
-export class HealthBar {
-  private scene: BaseScene;
+export class HealthBar extends Phaser.GameObjects.Container {
   private organism: Organism;
   private healthBarBg: Phaser.GameObjects.Rectangle;
   private healthBarFill: Phaser.GameObjects.Rectangle;
@@ -38,58 +27,40 @@ export class HealthBar {
   private hp: number;
   private offsetY: number;
 
-  constructor(
-    scene: BaseScene,
-    organism: Organism,
-    hp: number,
-    maxHp: number,
-    offsetY = 0,
-  ) {
-    this.scene = scene;
+  constructor(scene: BaseScene, organism: Organism, hp: number, maxHp: number) {
+    const offsetY = 0 - organism.height - HEALTH_BAR.offsetY;
+    super(scene, organism.x, organism.y + offsetY);
+
     this.organism = organism;
     this.hp = hp;
-    this.maxHp = maxHp;
+    this.maxHp = maxHp + 100;
     this.offsetY = offsetY;
+    this.depth = organism.depth;
 
-    const { x, y } = this.organism;
-    
     // Background health bar
-    this.healthBarBg = scene.add.rectangle(x, y + offsetY, HEALTH_BAR.width, HEALTH_BAR.height, HEALTH_BAR.color.background.value);
+    this.healthBarBg = scene.add.rectangle(0, 0, HEALTH_BAR.width, HEALTH_BAR.height, HEALTH_BAR.color.background.value);
     this.healthBarBg.setAlpha(HEALTH_BAR.color.background.alpha);
-    this.healthBarBg.setOrigin(0.5, 0.5);
-    this.healthBarBg.depth = organism.depth;
+    this.healthBarBg.setOrigin(0.5, 1);
 
     // Slacking fill
-    this.healthBarSlackingFill = scene.add.rectangle(x, y + offsetY, HEALTH_BAR.width, HEALTH_BAR.height, HEALTH_BAR.color.slackingFill.value);
+    this.healthBarSlackingFill = scene.add.rectangle(0, 0, HEALTH_BAR.width, HEALTH_BAR.height, HEALTH_BAR.color.slackingFill.value);
     this.healthBarSlackingFill.setAlpha(HEALTH_BAR.color.slackingFill.alpha);
-    this.healthBarSlackingFill.setOrigin(0.5, 0.5);
-    this.healthBarSlackingFill.depth = organism.depth
+    this.healthBarSlackingFill.setOrigin(0.5, 1);
 
     // Active fill
-    this.healthBarFill = scene.add.rectangle(x, y + offsetY, HEALTH_BAR.width, HEALTH_BAR.height, HEALTH_BAR.color.fill.value);
+    this.healthBarFill = scene.add.rectangle(0, 0, HEALTH_BAR.width, HEALTH_BAR.height, HEALTH_BAR.color.fill.value);
     this.healthBarFill.setAlpha(HEALTH_BAR.color.fill.alpha);
-    this.healthBarFill.setOrigin(0.5, 0.5);
-    this.healthBarFill.depth = organism.depth
+    this.healthBarFill.setOrigin(0.5, 1);
 
+    this.add([this.healthBarBg, this.healthBarSlackingFill, this.healthBarFill]);
     this.renderHealthSegments();
-    scene.events.on(Phaser.Scenes.Events.POST_UPDATE, this.updatePosition, this);
+    
+    scene.add.existing(this);
+    scene.events.on(Phaser.Scenes.Events.POST_UPDATE, this.update, this);
   }
 
   private updatePosition() {
-    const x = this.organism.x;
-    const y = this.organism.y + this.offsetY;
-  
-    this.healthBarBg.setPosition(x, y);
-    this.healthBarFill.setPosition(x, y);
-    this.healthBarSlackingFill.setPosition(x, y);
-  
-    this.renderHealthSegments();
-  }
-  
-
-  public updateMaxHealth(newMaxHp: number) {
-    this.maxHp = newMaxHp;
-    this.renderHealthSegments();
+    this.setPosition(this.organism.x, this.organism.y + this.offsetY);
   }
 
   public updateHealth(newHp: number) {
@@ -113,24 +84,24 @@ export class HealthBar {
   }
 
   private renderHealthSegments() {
-    // Don't render segments if set to 0
-    if (HEALTH_BAR.healthSegementHp === 0) {
-      return;
-    }
-
-    this.healthSegments.forEach(segment => segment.destroy()); // Remove existing segments
+    return;
+    this.healthSegments.forEach(segment => segment.destroy());
     this.healthSegments = [];
-    
-    const segmentWidth = 1; // Width of each segment
-    //const segmentsToRender = this.maxHp / HEALTH_BAR.healthSegementHp; // Calculate how many segments (50 HP per segment)
-    const segmentsToRender = Math.floor(this.maxHp / HEALTH_BAR.healthSegementHp); // Calculate how many segments (50 HP per segment)
-    // Total width the segments should span
+
+    const segmentWidth = 1;
+    const segmentsToRender = Math.floor(this.maxHp / HEALTH_BAR.height);
     const totalWidth = HEALTH_BAR.width / segmentsToRender;
-    for (let i = 1; i < segmentsToRender; i++) { 
-      const segmentX = this.healthBarBg.x - (this.healthBarBg.width / 2) + i * totalWidth;      
-      const segment = this.scene.add.rectangle(segmentX, this.healthBarBg.y, segmentWidth, HEALTH_BAR.height, HEALTH_BAR.color.segment.value); 
+
+    for (let i = 1; i < segmentsToRender; i++) {
+      const segmentX = -HEALTH_BAR.width / 2 + i * totalWidth;
+      const segment = this.scene.add.rectangle(segmentX, 0, segmentWidth, HEALTH_BAR.height, HEALTH_BAR.color.segment.value);
       segment.setAlpha(HEALTH_BAR.color.segment.alpha);
+      this.add(segment);
       this.healthSegments.push(segment);
     }
-  } 
+  }
+
+  update() {
+    this.updatePosition();
+  }
 }

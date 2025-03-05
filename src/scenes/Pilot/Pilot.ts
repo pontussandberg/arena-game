@@ -15,6 +15,7 @@ import { SCENE_CONFIG, Textures } from "./Pilot.constants"
 import { ProjectileManager } from "../../objects/ProjectileManager/ProjectileManager"
 import { BaseScene } from "../BaseScene";
 import { BaseProjectile } from "../../objects/ProjectileManager/Projectiles/BaseProjectile"
+import { ASSET_SCALE } from "../../constants"
 
 export default class Pilot extends BaseScene {
   private player!: Player;
@@ -34,8 +35,8 @@ export default class Pilot extends BaseScene {
     this.load.image(Textures.boxLarge, boxLarge);
     this.load.image(Textures.ground, ground);
     this.load.spritesheet(Textures.player, player, {
-      frameWidth: 125,
-      frameHeight: 110,
+      frameWidth: 127 * ASSET_SCALE,
+      frameHeight: 110 * ASSET_SCALE,
     });
     this.load.image(Textures.cloudGroup, cloudGroup);
     this.load.image(Textures.bow, bow);
@@ -53,7 +54,7 @@ export default class Pilot extends BaseScene {
       backgroundColorHex,
     } = SCENE_CONFIG;
 
-    this.cameras.main.setZoom(1.2);
+    this.cameras.main.setZoom(1);
 
     // ################################################################
     // Projectile Manager
@@ -160,16 +161,16 @@ export default class Pilot extends BaseScene {
     // ################################################################
     this.clouds = this.physics.add.staticGroup();
     [
-      new Platform(this, 0 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
-      new Platform(this, 1 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
-      new Platform(this, 2 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
-      new Platform(this, 3 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
-      new Platform(this, 4 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
-      new Platform(this, 5 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
-      new Platform(this, 6 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
-      new Platform(this, 7 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
-      new Platform(this, 8 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
-      new Platform(this, 9 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
+      new Platform(this, 0 * 1000 + 100, mapHeight - groundHeight - 2000, "cloudGroup"),
+      new Platform(this, 1 * 1000 + 100, mapHeight - groundHeight - 2000, "cloudGroup"),
+      new Platform(this, 2 * 1000 + 100, mapHeight - groundHeight - 2000, "cloudGroup"),
+      new Platform(this, 3 * 1000 + 100, mapHeight - groundHeight - 2000, "cloudGroup"),
+      new Platform(this, 4 * 1000 + 100, mapHeight - groundHeight - 2000, "cloudGroup"),
+      new Platform(this, 5 * 1000 + 100, mapHeight - groundHeight - 2000, "cloudGroup"),
+      new Platform(this, 6 * 1000 + 100, mapHeight - groundHeight - 2000, "cloudGroup"),
+      new Platform(this, 7 * 1000 + 100, mapHeight - groundHeight - 2000, "cloudGroup"),
+      new Platform(this, 8 * 1000 + 100, mapHeight - groundHeight - 2000, "cloudGroup"),
+      new Platform(this, 9 * 1000 + 100, mapHeight - groundHeight - 2000, "cloudGroup"),
     ].forEach(object => this.clouds.add(object))
   }
 

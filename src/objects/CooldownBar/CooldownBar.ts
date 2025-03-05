@@ -2,8 +2,18 @@ import Phaser from "phaser";
 import { BaseScene } from "../../scenes/BaseScene";
 
 const COOLDOWN_BAR = {
+  offsetY: 10,
   height: 4,
-  width: 60,
+  width: 110,
+
+  background: {
+    fill: 0x555555,
+    alpha: 0.5,
+  },
+  foreGround: {
+    fill: 0xffcc00,
+    alpha: 1,
+  }
 };
 
 export class CooldownBar extends Phaser.GameObjects.Container {
@@ -13,25 +23,19 @@ export class CooldownBar extends Phaser.GameObjects.Container {
   private cooldown: number = 1; // Prevents division by zero
   private inverse: boolean = false; // Whether the bar should fill up instead of emptying
   private objectToFollow : Phaser.GameObjects.Sprite;
-  private offsetX: number;
-  private offsetY: number;
 
   constructor(
     scene: BaseScene, 
     objectToFollow: Phaser.GameObjects.Sprite,
-    offsetX: number = 0,
-    offsetY: number = 0,
-  ) {
-    super(scene, objectToFollow.x + offsetX, objectToFollow.y + offsetY); // Set position relative to the object
+  ) {  
+    super(scene, objectToFollow.x, objectToFollow.y - objectToFollow.height - COOLDOWN_BAR.offsetY + COOLDOWN_BAR.height); // Set position relative to the object
     this.objectToFollow = objectToFollow;
-    this.offsetX = offsetX;
-    this.offsetY = offsetY;
     this.depth = objectToFollow.depth;
 
     // Background (static, physics-enabled sprite)
     this.background = new Phaser.GameObjects.Graphics(scene);
-    this.background.fillStyle(0x555555, 0.5); // Darker color for the background
-    this.background.fillRect(-COOLDOWN_BAR.width / 2, -COOLDOWN_BAR.height / 2, COOLDOWN_BAR.width, COOLDOWN_BAR.height);
+    this.background.fillStyle(COOLDOWN_BAR.background.fill, COOLDOWN_BAR.background.alpha); // Darker color for the background
+    this.background.fillRect(-COOLDOWN_BAR.width / 2, 0, COOLDOWN_BAR.width, COOLDOWN_BAR.height);
     this.add(this.background);  // Add background to the container
 
     // Foreground (progress bar, physics-enabled sprite)
@@ -44,6 +48,10 @@ export class CooldownBar extends Phaser.GameObjects.Container {
 
     // Listen to the POST_UPDATE event to update the position and bar behavior
     scene.events.on(Phaser.Scenes.Events.POST_UPDATE, this.update, this);
+  }
+
+  private getY() {
+    return 
   }
 
   /**
@@ -78,10 +86,10 @@ export class CooldownBar extends Phaser.GameObjects.Container {
 
     const barProgress = this.inverse ? (1 - progress) : progress;
 
-    this.bar.fillStyle(0xffcc00, 1);  // Color for the bar
+    this.bar.fillStyle(COOLDOWN_BAR.foreGround.fill, COOLDOWN_BAR.foreGround.alpha);
     this.bar.fillRect(
       -COOLDOWN_BAR.width / 2,
-      -COOLDOWN_BAR.height / 2,
+      0,
       COOLDOWN_BAR.width * barProgress,
       COOLDOWN_BAR.height
     );
@@ -91,8 +99,8 @@ export class CooldownBar extends Phaser.GameObjects.Container {
    * Updates the position of the CooldownBar based on the player position
    */
   public updatePosition() {
-    const x = this.objectToFollow.x + this.offsetX;
-    const y = this.objectToFollow.y + this.offsetY;
+    const x = this.objectToFollow.x;
+    const y = this.objectToFollow.y - this.objectToFollow.height - COOLDOWN_BAR.offsetY;
     this.setPosition(x, y);  // Update position for the container
   }
 
@@ -110,7 +118,7 @@ export class CooldownBar extends Phaser.GameObjects.Container {
     // You can add other logic here, like checking cooldown or triggering events
     if (this.remainingCooldown <= 0) {
       // Example of doing something when cooldown is finished
-      console.log("Cooldown finished");
+      //console.log("Cooldown finished");
     }
   }
 }
