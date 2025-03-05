@@ -68,7 +68,7 @@ export default class Player extends Organism {
     this.projectileManager = projectileManager;
     this.setOrigin(0.5, 1)
     this.setSize(CHARACTER_WIDTH, CHARACTER_HEIGHT);
-    this.setFrame(0)
+    
 
     // ################################################################
     // Cooldown bar
@@ -76,24 +76,12 @@ export default class Player extends Organism {
     this.cooldownBar = new CooldownBar(scene, this);
 
     // ################################################################
-    // Body follower (Togglable spear over head)
-    // ################################################################
-    const controlledFollowerItems = [
-      {
-        id: WeaponId.spear,
-        texture: Textures.spear,
-        x: 0,
-        y: -12,
-      }
-    ];
-
-    // ################################################################
     // Init Mouse Follower
     // ################################################################
     this.mouseFollower = new MouseFollower(
       scene,
       this,
-      undefined,
+      Textures.pointer,
     );
 
     // Input
@@ -199,8 +187,10 @@ export default class Player extends Organism {
     
     if (Phaser.Input.Keyboard.JustDown(this.cursors.ONE)) {
       this.equipWeapon(WEAPONS.none);
+      this.mouseFollower.setOriginY("center");
     } else if (Phaser.Input.Keyboard.JustDown(this.cursors.TWO)) {
       this.equipWeapon(WEAPONS.spear);
+      this.mouseFollower.setOriginY("top");
     } 
     /*
     else if (Phaser.Input.Keyboard.JustDown(this.cursors.THREE)) {
@@ -294,7 +284,7 @@ export default class Player extends Organism {
     
     // Spawn on mouse follower
     const spawnX = this.getBody().x;
-    const spawnY = this.getBody().y
+    const spawnY = this.getBody().y -15;
     
     // Fire projectile from adjusted position
     this.projectileManager.fireProjectile(
@@ -305,12 +295,16 @@ export default class Player extends Organism {
       spawnY,
       ProjectileId.spear,
     );
-
-    // Flip char if throwing towards other dir
+  
+    // Flip character if throwing towards other direction
     this.forceFlipXOverDuration(velX < 0, WEAPONS.spear.attackSpeed);
-
-    this.anims.play(WEAPONS.spear.id);
+  
+    // Play animation and set back to idle frame after completion
+    this.anims.play(WEAPONS.spear.id).once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+      this.setFrame(this.equippedWeapon?.spritesheetFrame || 0);
+    });
   }
+  
 
   private fireArrow(): void {
     const { velX, velY } = this.mouseFollower.calcVelocityTowardsMouse(1000);
@@ -379,17 +373,14 @@ export default class Player extends Organism {
     // ################################################################
     this.lastDashTime = this.scene.time.now;
     this.airDashCount++;
-
-    // ################################################################
-    // Dash velocity handled on Organism
-    // ################################################################
+    
     const { velX, velY } = this.mouseFollower.calcVelocityTowardsMouse(this.config.dashVelocity);
     const dashDuration = this.dash(velX, velY, this.config.dashDecayVelocity) / 2;
     const rotateDelay = dashDuration * 0.3;
     const rotateDuration = dashDuration * 0.7;
 
     // ################################################################
-    // Rotate towards dash
+    // Set rotate on dash
     // ################################################################
     this.scene.tweens.killTweensOf(this);
     this.setRotation(this.mouseFollower.calcMouseAngle() + Math.PI / 2);
