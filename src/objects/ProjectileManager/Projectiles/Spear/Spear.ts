@@ -10,9 +10,23 @@ export class Spear extends BaseProjectile {
     shooter: Phaser.GameObjects.Sprite, 
     startX: number, 
     startY: number, 
-    velX: number, 
-    velY: number
+    velocityX: number, 
+    velocityY: number,
+    compensateForShooterMovement?: boolean,
   ) {
-    super(scene, Textures.spear, startX, startY, velX, velY, shooter, 30);
+    // ################################################################
+    // Init
+    // ################################################################
+    super(
+      scene, 
+      Textures.spear, 
+      startX, 
+      startY, 
+      velocityX, 
+      velocityY, 
+      shooter, 
+      30, 
+      compensateForShooterMovement
+    );
   }
 }
