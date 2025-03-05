@@ -33,7 +33,7 @@ export enum WeaponId {
 export const WEAPONS: WeaponMap = {
   [WeaponId.none]: {
     id: WeaponId.none,
-    spritesheetFrame: 0,
+    spritesheetFrame: 2,
     attackSpeed: 0,
     mouseFollower: {
       texture: Textures.pointer,

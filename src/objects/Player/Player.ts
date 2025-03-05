@@ -205,9 +205,12 @@ export default class Player extends Organism {
       this.equipWeapon(WEAPONS.none);
     } else if (Phaser.Input.Keyboard.JustDown(this.cursors.TWO)) {
       this.equipWeapon(WEAPONS.spear);
-    } else if (Phaser.Input.Keyboard.JustDown(this.cursors.THREE)) {
+    } 
+    /*
+    else if (Phaser.Input.Keyboard.JustDown(this.cursors.THREE)) {
       this.equipWeapon(WEAPONS.bow);
     }
+    */
 
     // ################################################################
     // Drop through platform
