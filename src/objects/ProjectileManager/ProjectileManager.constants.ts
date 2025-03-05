@@ -5,12 +5,12 @@ import { ProjectileDimensions } from "./ProjectileManager.types";
  */
 export enum ProjectileId {
   arrow = "arrow",
-  goldSpear = "goldSpear",
+  spear = "spear",
 };
 
 export const PROJECTILE_TEXTURE_MAP = {
   [ProjectileId.arrow]: "defaultArrow",
-  [ProjectileId.goldSpear]: "goldSpear",
+  [ProjectileId.spear]: "spear",
 };
 
 export const PROJECTILE_DIMENSIONS: Record<ProjectileId, ProjectileDimensions> = {
@@ -18,7 +18,7 @@ export const PROJECTILE_DIMENSIONS: Record<ProjectileId, ProjectileDimensions> =
     width: 6,
     height: 37,
   },
-  [ProjectileId.goldSpear]: {
+  [ProjectileId.spear]: {
     width: 9,
     height: 121,
   },

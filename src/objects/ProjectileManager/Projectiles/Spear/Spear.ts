@@ -13,6 +13,6 @@ export class Spear extends BaseProjectile {
     velX: number, 
     velY: number
   ) {
-    super(scene, Textures.goldSpear, startX, startY, velX, velY, shooter, 30);
+    super(scene, Textures.spear, startX, startY, velX, velY, shooter, 30);
   }
 }

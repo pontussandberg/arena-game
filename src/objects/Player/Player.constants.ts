@@ -26,15 +26,29 @@ export const PLAYER_CONFIG: PlayerConfig = {
 };
 
 export enum WeaponId {
+  none = "none",
   bow = "bow",
   spear = "spear",
 }
 export const WEAPONS: WeaponMap = {
+  [WeaponId.none]: {
+    id: WeaponId.none,
+    spritesheetFrame: 0,
+    attackSpeed: 0,
+    mouseFollower: {
+      texture: Textures.pointer,
+      radius: {
+        x: 60,
+        y: 90,
+      },
+    },
+  },
   [WeaponId.bow]: {
     id: WeaponId.bow,
-    mouseFollowerTexture: Textures.bow,
+    spritesheetFrame: 0,
     attackSpeed: 400,
     mouseFollower: {
+      texture: Textures.bow,
       radius: {
         x: 60,
         y: 90,
@@ -43,12 +57,13 @@ export const WEAPONS: WeaponMap = {
   },
   [WeaponId.spear]: {
     id: WeaponId.spear,
-    mouseFollowerTexture: Textures.pointer,
+    spritesheetFrame: 0,
     attackSpeed: 1000,
     mouseFollower: {
-      radius: {
-        x: 70,
-        y: 80,
+      texture: Textures.spear,
+      staticPosition: {
+        offsetX: 0,
+        offsetY: -75,
       },
     },
   },

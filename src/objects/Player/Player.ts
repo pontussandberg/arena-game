@@ -7,11 +7,12 @@ import { ProjectileManager } from "../ProjectileManager/ProjectileManager";
 import { BaseScene } from "../../scenes/BaseScene";
 import { ProjectileId } from "../ProjectileManager/ProjectileManager.constants";
 import { Textures } from "../../scenes/Pilot/Pilot.constants";
-import { BodyFollower } from "../BodyFollower/BodyFollower";
 import { CooldownBar } from "../CooldownBar";
-
-const SPEAR_FIXED_TOP_OFFSET = -40;
 const DASH_ROTATION_DURATION = 500;
+const CHARACTER_WIDTH = 35;
+const CHARACTER_HEIGHT = 88;
+// Extra space from top of physics boundry
+const COOLDOWN_BAR_OFFSET_TOP = 28;
 
 interface Cursors {
   W: Phaser.Input.Keyboard.Key;
@@ -43,7 +44,10 @@ export default class Player extends Organism {
    */
   public standingOnPassThroughPlatform: boolean = false;
   private equippedWeapon: Weapon | null = null;
-  private bodyFollower: BodyFollower;
+
+  // Used to set default sprite sheet frame during spear cooldown
+  private resetFrameTimeout?: NodeJS.Timeout;
+  
 
   constructor(
     scene: BaseScene,
@@ -58,6 +62,7 @@ export default class Player extends Organism {
       x,
       y,
       texture,
+      config.depth,
       scene.restartScene,
       config.organismOptions
     );
@@ -65,13 +70,15 @@ export default class Player extends Organism {
     scene.physics.add.existing(this);
     this.scene = scene;
     this.config = config;
-    this.depth = config.depth;
     this.projectileManager = projectileManager;
+    this.setOrigin(0.5, 1)
+    this.setSize(CHARACTER_WIDTH, CHARACTER_HEIGHT);
+    this.setFrame(1)
 
     // ################################################################
     // Cooldown bar
     // ################################################################
-    this.cooldownBar = new CooldownBar(scene, this, -19);
+    this.cooldownBar = new CooldownBar(scene, this, 0, 0 - this.getBody().height - COOLDOWN_BAR_OFFSET_TOP);
 
     // ################################################################
     // Body follower (Togglable spear over head)
@@ -79,12 +86,11 @@ export default class Player extends Organism {
     const controlledFollowerItems = [
       {
         id: WeaponId.spear,
-        texture: Textures.goldSpear,
+        texture: Textures.spear,
         x: 0,
         y: -12,
       }
     ];
-    this.bodyFollower = new BodyFollower(scene, this, config.depth, SPEAR_FIXED_TOP_OFFSET, controlledFollowerItems)
 
     // ################################################################
     // Init Mouse Follower
@@ -93,7 +99,6 @@ export default class Player extends Organism {
       scene,
       this,
       undefined,
-      { depth: config.depth },
     );
 
     // Input
@@ -118,20 +123,27 @@ export default class Player extends Organism {
       }
     });
 
-    this.equipWeapon(null);
+    this.equipWeapon(WEAPONS.none);
+    this.createAnimations();
+  }
+  // ################################################################
+  // !!! Constructor end
+  // ################################################################
+
+  private createAnimations() {
+    this.scene.anims.create({
+      key: WEAPONS.spear.id, // The name of the animation
+      frames: this.scene.anims.generateFrameNames(Textures.player, {
+        start: 1, // The first frame of the animation
+        end: 2,   // The last frame of the animation
+      }),
+      
+      duration: WEAPONS.spear.attackSpeed, // Duration for the whole animation cycle
+      repeat: 0,    // Repeat indefinitely
+    });
   }
 
   public update() {
-    this.mouseFollower.update();
-
-    /**
-     * Rotate the fixed bodyfollower item towards mouse pos (spear above head)
-     */
-    this.bodyFollower.setControlledItemRotation(
-      WeaponId.spear,
-      this.mouseFollower.mouseAngle
-    );
-
     if (!this.cursors) {
       return;
     }
@@ -191,7 +203,7 @@ export default class Player extends Organism {
     }
     
     if (Phaser.Input.Keyboard.JustDown(this.cursors.ONE)) {
-      this.equipWeapon(null);
+      this.equipWeapon(WEAPONS.none);
     } else if (Phaser.Input.Keyboard.JustDown(this.cursors.TWO)) {
       this.equipWeapon(WEAPONS.spear);
     } else if (Phaser.Input.Keyboard.JustDown(this.cursors.THREE)) {
@@ -257,6 +269,7 @@ export default class Player extends Organism {
         this.performJump();
       }
     }
+    this.mouseFollower.update();
   }
 
   // ################################################################
@@ -279,12 +292,15 @@ export default class Player extends Organism {
   }
   
   private throwSpear(): void {
-    const { velX, velY } = this.getVelocityTowardsMouse(1000);
-    this.bodyFollower.hideControlledItemOverDuration(WeaponId.spear, WEAPONS[WeaponId.spear].attackSpeed)
-  
-    // Calculate correct spawn position
+    if (this.resetFrameTimeout) {
+      clearTimeout(this.resetFrameTimeout);
+    }
+
+    const { velX, velY } = this.mouseFollower.calcVelocityTowardsMouse(1000, undefined, this.getBody().y);
+    
+    // Spawn on mouse follower
     const spawnX = this.getBody().x;
-    const spawnY = this.getBody().y + SPEAR_FIXED_TOP_OFFSET;
+    const spawnY = this.getBody().y
     
     // Fire projectile from adjusted position
     this.projectileManager.fireProjectile(
@@ -293,23 +309,29 @@ export default class Player extends Organism {
       velY,
       spawnX,
       spawnY,
-      ProjectileId.goldSpear,
+      ProjectileId.spear,
     );
+
+    // Flip char if throwing towards other dir
+    this.forceFlipXOverDuration(velX < 0, WEAPONS.spear.attackSpeed);
+
+    // Set frame to default during cooldown
+    this.setFrame(0);
+    this.resetFrameTimeout = setTimeout(() => {
+      this.setFrame(WEAPONS.spear.spritesheetFrame);
+    }, WEAPONS.spear.attackSpeed);
+
+    this.anims.play(WEAPONS.spear.id); // Play the walking animation
   }
 
   private fireArrow(): void {
-    const { velX, velY } = this.getVelocityTowardsMouse(1000);
+    const { velX, velY } = this.mouseFollower.calcVelocityTowardsMouse(1000);
     
-    // Bow dimensions
-    const bowWidth = this.mouseFollower.width; // Assuming it's set correctly
-    const spawnOffset = bowWidth / 2; // Move the arrow outward
-  
-    // Bow's rotation in radians
-    const angle = this.mouseFollower.rotation;
-  
     // Calculate correct spawn position
-    const spawnX = this.mouseFollower.x + Math.cos(angle) * spawnOffset;
-    const spawnY = this.mouseFollower.y + Math.sin(angle) * spawnOffset;
+    const OFFSET_X = 30;
+    const offsetX = velX > 0 ? OFFSET_X : -OFFSET_X;
+    const spawnX = this.x + offsetX;
+    const spawnY = this.y - this.height / 2 - 30;
   
     // Fire projectile from adjusted position
     this.projectileManager.fireProjectile(
@@ -322,27 +344,14 @@ export default class Player extends Organism {
     );
   }
 
-  equipWeapon(weapon: Weapon | null): void {
-  this.cooldownBar.startCooldown(weapon?.attackSpeed ?? 0, true);
-    
-    /**
-     * No weapon equipped
-     */
-    if (!weapon) {
-      this.bodyFollower.setControlledItemVisibility(WeaponId.spear, false)
-      this.mouseFollower.setMaxRadius(65, 85);
-      this.mouseFollower.updateTexture(Textures.pointer);
-      this.equippedWeapon = null;
-    } else if (weapon.id === WeaponId.bow) {
-      this.bodyFollower.setControlledItemVisibility(WeaponId.spear, false)
-      this.mouseFollower.setMaxRadius(weapon.mouseFollower.radius.x, weapon.mouseFollower.radius.y);
-      this.mouseFollower.updateTexture(Textures.bow);
-      this.equippedWeapon = WEAPONS.bow;
-    } else if (weapon.id === WeaponId.spear) {
-      this.bodyFollower.setControlledItemVisibility(WeaponId.spear, true)
-      this.mouseFollower.updateTexture(null);
-      this.equippedWeapon = WEAPONS.spear;
+  equipWeapon(weapon: Weapon): void {
+    if (this.equippedWeapon && this.equippedWeapon.id === weapon.id) {
+      return;
     }
+
+    this.cooldownBar.startCooldown(weapon?.attackSpeed ?? 0, true);
+    this.setFrame(weapon.spritesheetFrame);
+    this.equippedWeapon = WEAPONS[weapon.id];
   }
 
   /**
@@ -350,22 +359,6 @@ export default class Player extends Organism {
    */
   public getBody(): Phaser.Physics.Arcade.Body {
     return this.body as Phaser.Physics.Arcade.Body;
-  }
-
-  /**
-   * Get a velocity in the direction of the mouse mouseFollower.mouseAngle
-   */
-  private getVelocityTowardsMouse(velocity: number): {
-    velX: number;
-    velY: number;
-  } {
-    const angle = this.mouseFollower.mouseAngle;
-    const velX = Math.cos(angle) * velocity;
-    const velY = Math.sin(angle) * velocity;
-    return {
-      velX,
-      velY,
-    };
   }
 
   private performJump(): void {
@@ -401,7 +394,7 @@ export default class Player extends Organism {
     // ################################################################
     // Dash velocity handled on Organism
     // ################################################################
-    const { velX, velY } = this.getVelocityTowardsMouse(this.config.dashVelocity);
+    const { velX, velY } = this.mouseFollower.calcVelocityTowardsMouse(this.config.dashVelocity);
     const dashDuration = this.dash(velX, velY, this.config.dashDecayVelocity) / 2;
     const rotateDelay = dashDuration * 0.3;
     const rotateDuration = dashDuration * 0.7;
@@ -410,7 +403,7 @@ export default class Player extends Organism {
     // Rotate towards dash
     // ################################################################
     this.scene.tweens.killTweensOf(this);
-    this.setRotation(this.mouseFollower.mouseAngle + Math.PI / 2);
+    this.setRotation(this.mouseFollower.calcMouseAngle() + Math.PI / 2);
     this.scene.time.addEvent({
       delay: rotateDelay, // Wait before starting reset
       callback: () => this.resetRotation(rotateDuration),

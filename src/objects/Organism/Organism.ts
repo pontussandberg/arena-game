@@ -3,6 +3,7 @@ import { HealthBar } from "../HealthBar";
 import { BaseScene } from "../../scenes/BaseScene";
 
 const MAX_VEL_DECAY_EVENT_DELAY = 16;
+const HEALTH_BAR_OFFSET_TOP = 10;
 
 export interface OrganismOptions {
   maxHealth: number;
@@ -40,11 +41,16 @@ export class Organism extends Phaser.Physics.Arcade.Sprite {
   private lastDirection: "left" | "right" = "right";
   private onDie?: OrganismOptions["onDie"];
 
+  // Disable flipping sprite to the direction its moving
+  private disableMovementFlipTimeout?: NodeJS.Timeout;
+  private disableMovementFlip: boolean = false;
+
   constructor(
     scene: BaseScene,
     x: number,
     y: number,
     texture: string,
+    depth: number,
     onDie: () => void,
     {
       maxHealth,
@@ -62,6 +68,7 @@ export class Organism extends Phaser.Physics.Arcade.Sprite {
     this.maxHealth = maxHealth;
     this.acceleration = acceleration;
     this.baseMaxVelocity = maxVelocity;
+    this.depth = depth
 
     // ################################################################
     // Physics
@@ -75,23 +82,41 @@ export class Organism extends Phaser.Physics.Arcade.Sprite {
     // ################################################################
     // HP Bar
     // ################################################################
-    this.healthBar = new HealthBar(scene, this, maxHealth, maxHealth, -14);
+    this.healthBar = new HealthBar(scene, this, maxHealth, maxHealth, 0 - this.getBody().height - HEALTH_BAR_OFFSET_TOP);
   }
 
   /**
    * Set acceleration in a direction
    */
   public moveHorizontal(dir: "left" | "right"): void {
+
+    if (!this.disableMovementFlip) {
+      this.setFlipX(dir === "left");
+    }
+
     if (dir === "left") {
-      this.setFlipX(true);
+      
       this.setAccelerationX(-this.acceleration);
       this.lastDirection = "left";
     } else if (dir === "right") {
-      this.setFlipX(false);
+      
       this.setAccelerationX(this.acceleration);
       this.lastDirection = "right";
     }
   };
+
+  public forceFlipXOverDuration(forcedState: boolean, timeMs: number) {
+    if (this.disableMovementFlipTimeout) {
+      clearTimeout(this.disableMovementFlipTimeout);
+    }
+
+    this.disableMovementFlip = true;
+    this.setFlipX(forcedState);
+
+    this.disableMovementFlipTimeout = setTimeout(() => {
+      this.disableMovementFlip = false;
+    }, timeMs)
+  }
 
   /**
    * Stop acceleration, let drag slow it down
@@ -115,16 +140,10 @@ export class Organism extends Phaser.Physics.Arcade.Sprite {
 
   private die(): void {
     if (this.onDie) {
-      this.onDie?.();
+      //this.onDie?.();
     } else {
-      this.destroy();
+      //this.destroy();
     }
-  }
-
-  update() {
-    console.log(this.getBody().maxVelocity.x);
-    console.log(this.getBody().velocity.x);
-    console.log("------------");
   }
 
   /**
@@ -191,7 +210,7 @@ export class Organism extends Phaser.Physics.Arcade.Sprite {
   }
 
   public setMaxHealth(newMax: number) {
-    this.healthBar.updateMaxHealth(newMax);
+    //this.healthBar.updateMaxHealth(newMax);
     if (newMax < this.health) {
       return this.die();
     }

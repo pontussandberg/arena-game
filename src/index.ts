@@ -11,7 +11,7 @@ const config = {
     arcade: {
       gravity: { y: 0, x: 0 },
       fixedStep: true,
-      fps: 144,
+      fps: 75,
     },
   },
   fps: { target: 144, forceSetTimeOut: false },

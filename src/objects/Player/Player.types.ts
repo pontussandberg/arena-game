@@ -53,12 +53,17 @@ export interface PlayerConfig {
 export type WeaponMap = Record<WeaponId, Weapon>;
 export interface Weapon {
   id: WeaponId;
+  spritesheetFrame: number;
   attackSpeed: number;
-  mouseFollowerTexture: Textures;
   mouseFollower: {
-    radius: {
+    texture: Textures;
+    radius?: {
       x: number;
       y: number;
     };
+    staticPosition?: {
+      offsetX: number,
+      offsetY: number,
+    }
   };
 }

@@ -37,7 +37,7 @@ export class ProjectileManager {
           velocityX,
           velocityY,
         );
-      case ProjectileId.goldSpear:
+      case ProjectileId.spear:
         return new Spear(
           this.scene,      
           shooter,

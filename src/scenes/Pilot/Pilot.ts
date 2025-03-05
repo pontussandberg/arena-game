@@ -1,9 +1,10 @@
 import boxSmall from "../../assets/box_small.png"
 import boxLarge from "../../assets/box_large.png"
 import ground from "../../assets/ground.png"
-import player from "../../assets/player.png"
+import player from "../../assets/spritesheet.png"
 import arrow from "../../assets/projectiles/arrow.png"
 import spear from "../../assets/projectiles/spear.png"
+import rect from "../../assets/rect.png"
 import cloudGroup from "../../assets/cloud-group.png"
 import bow from "../../assets/weapons/bow.png";
 import pointer from "../../assets/pointer.png";
@@ -32,12 +33,16 @@ export default class Pilot extends BaseScene {
     this.load.image(Textures.boxSmall, boxSmall);
     this.load.image(Textures.boxLarge, boxLarge);
     this.load.image(Textures.ground, ground);
-    this.load.image(Textures.player, player);
+    this.load.spritesheet(Textures.player, player, {
+      frameWidth: 125,
+      frameHeight: 110,
+    });
     this.load.image(Textures.cloudGroup, cloudGroup);
     this.load.image(Textures.bow, bow);
     this.load.image(Textures.defaultArrow, arrow);
-    this.load.image(Textures.goldSpear, spear);
+    this.load.image(Textures.spear, spear);
     this.load.image(Textures.pointer, pointer);
+    this.load.image(Textures.rect, rect);
   }
 
   create() {
@@ -47,6 +52,8 @@ export default class Pilot extends BaseScene {
       groundHeight,
       backgroundColorHex,
     } = SCENE_CONFIG;
+
+    this.cameras.main.setZoom(1.2);
 
     // ################################################################
     // Projectile Manager
@@ -153,16 +160,16 @@ export default class Pilot extends BaseScene {
     // ################################################################
     this.clouds = this.physics.add.staticGroup();
     [
-      new FullscreenBtn(this, 0 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
-      new FullscreenBtn(this, 1 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
-      new FullscreenBtn(this, 2 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
-      new FullscreenBtn(this, 3 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
-      new FullscreenBtn(this, 4 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
-      new FullscreenBtn(this, 5 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
-      new FullscreenBtn(this, 6 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
-      new FullscreenBtn(this, 7 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
-      new FullscreenBtn(this, 8 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
-      new FullscreenBtn(this, 9 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
+      new Platform(this, 0 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
+      new Platform(this, 1 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
+      new Platform(this, 2 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
+      new Platform(this, 3 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
+      new Platform(this, 4 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
+      new Platform(this, 5 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
+      new Platform(this, 6 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
+      new Platform(this, 7 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
+      new Platform(this, 8 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
+      new Platform(this, 9 * 1000 + 100, mapHeight - groundHeight - 1200, "cloudGroup"),
     ].forEach(object => this.clouds.add(object))
   }
 
