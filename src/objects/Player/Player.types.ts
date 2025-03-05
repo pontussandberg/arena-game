@@ -57,13 +57,5 @@ export interface Weapon {
   attackSpeed: number;
   mouseFollower: {
     texture: Textures;
-    radius?: {
-      x: number;
-      y: number;
-    };
-    staticPosition?: {
-      offsetX: number,
-      offsetY: number,
-    }
   };
 }

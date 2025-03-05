@@ -37,10 +37,6 @@ export const WEAPONS: WeaponMap = {
     attackSpeed: 0,
     mouseFollower: {
       texture: Textures.pointer,
-      radius: {
-        x: 60,
-        y: 90,
-      },
     },
   },
   [WeaponId.bow]: {
@@ -49,10 +45,6 @@ export const WEAPONS: WeaponMap = {
     attackSpeed: 400,
     mouseFollower: {
       texture: Textures.bow,
-      radius: {
-        x: 60,
-        y: 90,
-      },
     },
   },
   [WeaponId.spear]: {
@@ -61,10 +53,6 @@ export const WEAPONS: WeaponMap = {
     attackSpeed: 1000,
     mouseFollower: {
       texture: Textures.spear,
-      staticPosition: {
-        offsetX: 0,
-        offsetY: -75,
-      },
     },
   },
 }

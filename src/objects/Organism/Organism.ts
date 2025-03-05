@@ -82,15 +82,15 @@ export class Organism extends Phaser.Physics.Arcade.Sprite {
     // ################################################################
     // HP Bar
     // ################################################################
-    this.healthBar = new HealthBar(scene, this, maxHealth, maxHealth, 0 - this.getBody().height - HEALTH_BAR_OFFSET_TOP);
+    this.healthBar = new HealthBar(scene, this, maxHealth, maxHealth);
   }
 
   /**
    * Set acceleration in a direction
    */
   public moveHorizontal(dir: "left" | "right"): void {
-
     if (!this.disableMovementFlip) {
+      // TODO - maybe can remove
       this.setFlipX(dir === "left");
     }
 
