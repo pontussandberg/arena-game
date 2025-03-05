@@ -1,6 +1,5 @@
 import Phaser from "phaser";
 import { Organism } from "../../Organism";
-import { velocityToProjectileRadius } from "../../utility/mathHelpers";
 
 export class BaseProjectile extends Phaser.Physics.Arcade.Sprite {
   shooter: Phaser.GameObjects.Sprite;
