@@ -44,10 +44,6 @@ export default class Player extends Organism {
   public standingOnPassThroughPlatform: boolean = false;
   private equippedWeapon: Weapon | null = null;
 
-  // Used to set default sprite sheet frame during spear cooldown
-  private resetFrameTimeout?: NodeJS.Timeout;
-  
-
   constructor(
     scene: BaseScene,
     x: number,
@@ -72,7 +68,7 @@ export default class Player extends Organism {
     this.projectileManager = projectileManager;
     this.setOrigin(0.5, 1)
     this.setSize(CHARACTER_WIDTH, CHARACTER_HEIGHT);
-    this.setFrame(1)
+    this.setFrame(0)
 
     // ################################################################
     // Cooldown bar
@@ -294,10 +290,6 @@ export default class Player extends Organism {
   }
   
   private throwSpear(): void {
-    if (this.resetFrameTimeout) {
-      clearTimeout(this.resetFrameTimeout);
-    }
-
     const { velX, velY } = this.mouseFollower.calcVelocityTowardsMouse(1000, undefined, this.getBody().y);
     
     // Spawn on mouse follower
@@ -317,13 +309,7 @@ export default class Player extends Organism {
     // Flip char if throwing towards other dir
     this.forceFlipXOverDuration(velX < 0, WEAPONS.spear.attackSpeed);
 
-    // Set frame to default during cooldown
-    this.setFrame(0);
-    this.resetFrameTimeout = setTimeout(() => {
-      this.setFrame(WEAPONS.spear.spritesheetFrame);
-    }, WEAPONS.spear.attackSpeed);
-
-    this.anims.play(WEAPONS.spear.id); // Play the walking animation
+    this.anims.play(WEAPONS.spear.id);
   }
 
   private fireArrow(): void {
@@ -351,6 +337,7 @@ export default class Player extends Organism {
       return;
     }
 
+    this.anims.stop();
     this.cooldownBar.startCooldown(weapon?.attackSpeed ?? 0, true);
     this.setFrame(weapon.spritesheetFrame);
     this.equippedWeapon = WEAPONS[weapon.id];
