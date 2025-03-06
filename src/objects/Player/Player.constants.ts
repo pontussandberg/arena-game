@@ -4,6 +4,7 @@ import { PlayerConfig, Weapon, WeaponMap } from "./Player.types";
 export const PLAYER_CONFIG: PlayerConfig = {
   // multiJumpCharges: 3,
   // dashDelayMs: 0,
+  dashRestoreCooldown: 2000,
   depth: 100,
   jumpVelocity: 350,
   strafeCancelSnapVelocity: 100,

@@ -3,6 +3,7 @@ import { BaseScene } from "../../scenes/BaseScene";
 export class FloatingBar extends Phaser.GameObjects.Container {
   protected objectToFollow: Phaser.GameObjects.Sprite;
   protected offsetY: number;
+  public scene: BaseScene;
 
   constructor(
     scene: BaseScene, 
@@ -17,12 +18,13 @@ export class FloatingBar extends Phaser.GameObjects.Container {
     this.objectToFollow = objectToFollow;
     this.offsetY = offsetY;
     this.depth = objectToFollow.depth;
+    this.scene = scene;
 
     scene.add.existing(this);
     scene.events.on(
       Phaser.Scenes.Events.POST_UPDATE, 
       this.updatePosition, 
-      this
+      this,
     );
   }
 

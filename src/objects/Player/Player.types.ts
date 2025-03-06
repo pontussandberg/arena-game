@@ -30,6 +30,10 @@ export interface PlayerConfig {
    */
   dashVelocity: number;
   /**
+   * Time (ms) for a dash charge to restore
+   */
+  dashRestoreCooldown: number;
+  /**
    * Count of air dashes can do in the air before landing
    * Undefined for no limit
    */

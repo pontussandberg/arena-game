@@ -16,4 +16,5 @@ export enum Textures {
   "bow" = "bow",
   "pointer" = "pointer",
   "rect" = "rect",
+  "cooldownDot" = "cooldownDot",
 }

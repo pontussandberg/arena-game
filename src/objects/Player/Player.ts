@@ -9,6 +9,7 @@ import { ProjectileId } from "../ProjectileManager/ProjectileManager.constants";
 import { Textures } from "../../scenes/Pilot/Pilot.constants";
 import { CooldownBar } from "../CooldownBar";
 import { ASSET_SCALE } from "../../constants";
+import { CooldownCharges } from "../CooldownDots";
 
 const CHARACTER_WIDTH = 35 * ASSET_SCALE;
 const CHARACTER_HEIGHT = 88 * ASSET_SCALE;
@@ -37,6 +38,7 @@ export default class Player extends Organism {
   private projectileManager!: ProjectileManager;
   private lastDashTime: number = 0;
   private cooldownBar: CooldownBar;
+  private dashCooldownInterface: CooldownCharges;
   /**
    * Must be set to true from the scene it's rendered from in order for the
    * drop-through mechanic to work.
@@ -69,6 +71,16 @@ export default class Player extends Organism {
     this.setOrigin(0.5, 1)
     this.setSize(CHARACTER_WIDTH, CHARACTER_HEIGHT);
     
+    // ################################################################
+    // Dash charges interface
+    // ################################################################
+    this.dashCooldownInterface = new CooldownCharges(
+      scene,
+      this,
+      0,
+      3,
+      1000,
+    );
 
     // ################################################################
     // Cooldown bar
@@ -357,22 +369,27 @@ export default class Player extends Organism {
     });
   }
 
-  private canDash(): boolean {
+  private isDashBlockedByDashDelay(): boolean {
     return (
-      (!this.config.dashDelayMs || this.scene.time.now - (this.lastDashTime || 0) >= this.config.dashDelayMs)
-      && (!this.config.dashCharges || this.config.dashCharges > this.airDashCount)
+      !(!this.config.dashDelayMs || this.scene.time.now - (this.lastDashTime || 0) >= this.config.dashDelayMs)
     );
   }
+
   
   private performDash(): void {
-    if (!this.canDash()) {
+    if (
+      this.isDashBlockedByDashDelay()
+      || !this.dashCooldownInterface.hasCharges()
+    ) {
       return;
     }
+
+    this.dashCooldownInterface.consumeCharge();
     // ################################################################
     // Limiter counters
     // ################################################################
     this.lastDashTime = this.scene.time.now;
-    this.airDashCount++;
+  
     
     const { velX, velY } = this.mouseFollower.calcVelocityTowardsMouse(this.config.dashVelocity);
     const dashDuration = this.dash(velX, velY, this.config.dashDecayVelocity) / 2;
@@ -389,6 +406,10 @@ export default class Player extends Organism {
       callback: () => this.resetRotation(rotateDuration),
       callbackScope: this,
     });
+
+    // ################################################################
+    // Handle cooldown
+    // ################################################################
   }
 
   private canJumpBoost(): boolean {

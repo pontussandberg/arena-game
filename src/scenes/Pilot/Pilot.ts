@@ -5,6 +5,7 @@ import player from "../../assets/spritesheet.png"
 import arrow from "../../assets/projectiles/arrow.png"
 import spear from "../../assets/projectiles/spear.png"
 import rect from "../../assets/rect.png"
+import cooldownDot from "../../assets/cooldownDot.png"
 import cloudGroup from "../../assets/cloud-group.png"
 import bow from "../../assets/weapons/bow.png";
 import pointer from "../../assets/pointer.png";
@@ -44,6 +45,7 @@ export default class Pilot extends BaseScene {
     this.load.image(Textures.spear, spear);
     this.load.image(Textures.pointer, pointer);
     this.load.image(Textures.rect, rect);
+    this.load.image(Textures.cooldownDot, cooldownDot);
   }
 
   create() {
